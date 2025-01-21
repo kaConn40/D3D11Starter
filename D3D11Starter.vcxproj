@@ -155,16 +155,32 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\Downloads\imgui-master\imgui-master\imgui_demo.cpp" />
+    <ClCompile Include="..\..\..\Downloads\imgui-master\imgui-master\imgui_draw.cpp" />
+    <ClCompile Include="..\..\..\Downloads\imgui-master\imgui-master\imgui_tables.cpp" />
+    <ClCompile Include="..\..\..\Downloads\imgui-master\imgui-master\imgui_widgets.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="imgui_impl_dx11.cpp" />
+    <ClCompile Include="imgui_impl_win32.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="PathHelpers.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\Downloads\imgui-master\imgui-master\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\..\..\Downloads\imgui-master\imgui-master\imconfig.h" />
+    <ClInclude Include="..\..\..\Downloads\imgui-master\imgui-master\imgui_internal.h" />
+    <ClInclude Include="..\..\..\Downloads\imgui-master\imgui-master\imstb_rectpack.h" />
+    <ClInclude Include="..\..\..\Downloads\imgui-master\imgui-master\imstb_textedit.h" />
+    <ClInclude Include="..\..\..\Downloads\imgui-master\imgui-master\imstb_truetype.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Graphics.h" />
+    <ClInclude Include="imgui.h" />
+    <ClInclude Include="imgui_impl_dx11.h" />
+    <ClInclude Include="imgui_impl_win32.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="PathHelpers.h" />
     <ClInclude Include="Vertex.h" />
