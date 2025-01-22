@@ -24,8 +24,11 @@ using namespace DirectX;
 // --------------------------------------------------------
 void Game::Initialize()
 {
-
-	int *number = (int*)(0);
+	//set up default values for imgui
+	demoUI = true;
+	color = std::unique_ptr<float>((new float[4] { 0.4f, 0.6f, 0.75f, 0.0f }));
+	slider = std::unique_ptr<int>(new int(50));
+	input = std::unique_ptr<char>(new char[60]());
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
@@ -79,11 +82,6 @@ Game::~Game()
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
-	//clean up pointers
-	RGBA = NULL;
-	delete RGBA;
-	slider = NULL;
-	delete slider;
 }
 
 
@@ -285,14 +283,17 @@ void Game::Update(float deltaTime, float totalTime)
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::KeyDown(VK_ESCAPE))
 		Window::Quit();
+	std::string s{"text"};
 	// Feed fresh data to ImGui
 	UpdateImGui(deltaTime, totalTime);
 	//create window with requirements
 	ImGui::Begin("Assignment Window");
-	ImGui::Text("Framrate: %i fps", ImGui::GetIO().Framerate);
+	ImGui::Text("Framrate: %d fps", ImGui::GetIO().Framerate);
 	ImGui::Text("Window Resolution: %dx%d", Window::Width(), Window::Height());
-	ImGui::ColorEdit4("Background Color",RGBA);
-	ImGui::SliderInt("rate this ui ", slider, 0, 100);
+	ImGui::ColorEdit4("Background Color",color.get());
+	ImGui::SliderInt("rate this ui ", slider.get(), 0, 100);
+	//ImGui::InputText("Write here", input.get(),sizeof(long));
+	ImGui::InputTextWithHint("Type ","Any Feedback for the class so far",input.get(),60);
 	if (ImGui::Button("Open/Close demoWindow"))
 	{
 		demoUI = !demoUI;
@@ -318,7 +319,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - At the beginning of Game::Draw() before drawing *anything*
 	{
 		// Clear the back buffer (erase what's on screen) and depth buffer
-		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	RGBA);
+		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	color.get());
 		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 

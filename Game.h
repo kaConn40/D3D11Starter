@@ -25,11 +25,16 @@ private:
 	void LoadShaders();
 	void CreateGeometry();
 	void UpdateImGui(float deltaTime, float totalTime);
+
 	//some varaibles needed for ImGui
-	bool demoUI = true;
-	float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
-	float* RGBA = color;
-	int* slider = new int(50);
+	//float* color;
+	//int* slider;
+	std::unique_ptr<float>color;
+	std::unique_ptr<int>slider;
+	std::unique_ptr<char>input;
+	bool demoUI;
+	//float* color;
+	//int* slider;
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
 	//     Component Object Model, which DirectX objects do
