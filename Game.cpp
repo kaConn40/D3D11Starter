@@ -287,12 +287,13 @@ void Game::Update(float deltaTime, float totalTime)
 	// Feed fresh data to ImGui
 	UpdateImGui(deltaTime, totalTime);
 	//create window with requirements
+
+	//ImGui new window
 	ImGui::Begin("Assignment Window");
 	ImGui::Text("Framrate: %d fps", ImGui::GetIO().Framerate);
 	ImGui::Text("Window Resolution: %dx%d", Window::Width(), Window::Height());
 	ImGui::ColorEdit4("Background Color",color.get());
 	ImGui::SliderInt("rate this ui ", slider.get(), 0, 100);
-	//ImGui::InputText("Write here", input.get(),sizeof(long));
 	ImGui::InputTextWithHint("Type ","Any Feedback for the class so far",input.get(),60);
 	if (ImGui::Button("Open/Close demoWindow"))
 	{
