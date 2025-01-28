@@ -1,8 +1,9 @@
 #pragma once
-
+#include "Mesh.h"
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <memory>
+#include <vector>
 
 class Game
 {
@@ -31,7 +32,9 @@ private:
 	//int* slider;
 	std::unique_ptr<float>color;
 	std::unique_ptr<int>slider;
-	std::unique_ptr<char>input;
+	std::unique_ptr<char[]>input;
+
+	std::vector < std::shared_ptr<Mesh>>meshList;
 	bool demoUI;
 	//float* color;
 	//int* slider;
