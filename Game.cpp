@@ -271,11 +271,12 @@ void Game::Update(float deltaTime, float totalTime)
 	UpdateImGui(deltaTime, totalTime);
 	//create window with requirements
 
-	//ImGui new window
 	ImGui::Begin("Assignment Window");
 	ImGui::Text("Framrate: %d fps", ImGui::GetIO().Framerate);
 	ImGui::Text("Window Resolution: %dx%d", Window::Width(), Window::Height());
-	ImGui::ColorEdit4("Background Color",color.get());
+	ImGui::ColorEdit4("Background Color", color.get());
+	ImGui::SliderInt("rate this ui ", slider.get(), 0, 100);
+	ImGui::InputTextWithHint("Type ", "Any Feedback for the class so far", input.get(), 60);
 	for (int i = 0; i < meshList.size(); i++)
 	{
 		ImGui::Text("Shape %i Indices %i, Vertices: %i",i+1, meshList[i]->GetIndexCount(), meshList[i]->GetVertexCount());
