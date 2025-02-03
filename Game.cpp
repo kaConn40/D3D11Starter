@@ -26,7 +26,7 @@ void Game::Initialize()
 {
 	//set up default values for imgui
 	demoUI = false;
-	color = std::unique_ptr<float>((new float[4] { 0.4f, 0.6f, 0.75f, 0.0f }));
+	color = std::make_unique<float>((new float[4] { 0.4f, 0.6f, 0.75f, 0.0f }));
 	slider = std::make_unique<int>(50);
 	input = std::make_unique<char[]>(60);
 	// Helper methods for loading shaders, creating some basic
