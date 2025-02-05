@@ -28,16 +28,13 @@ private:
 	void UpdateImGui(float deltaTime, float totalTime);
 
 	//some varaibles needed for ImGui
-	//float* color;
-	//int* slider;
-	std::unique_ptr<float>color;
-	std::unique_ptr<int>slider;
-	std::unique_ptr<char[]>input;
-
+	DirectX::XMFLOAT4 color = { 0.4f, 0.6f, 0.75f, 0.0f };
+	std::unique_ptr<int>slider= std::make_unique<int>(50);
+	std::unique_ptr<char[]>input= std::make_unique<char[]>(60);
 	std::vector < std::shared_ptr<Mesh>>meshList;
-	bool demoUI;
-	//float* color;
-	//int* slider;
+	bool demoUI = false;
+	DirectX::XMFLOAT4 colorTint = { 0.2f, 0.8f, 0.8f, 1.0f };
+	DirectX::XMFLOAT3 offset = { 0.2f, 0.0f, 0.0f };
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
 	//     Component Object Model, which DirectX objects do
@@ -47,10 +44,13 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 
+	//constant buffer
+	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer;
 	// Shaders and shader-related constructs
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+
 
 	
 };

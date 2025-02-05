@@ -4,7 +4,7 @@
 #include "Input.h"
 #include "PathHelpers.h"
 #include "Window.h"
-
+#include "BufferStructs.h"
 #include <DirectXMath.h>
 
 // Needed for a helper function to load pre-compiled shader files
@@ -24,11 +24,6 @@ using namespace DirectX;
 // --------------------------------------------------------
 void Game::Initialize()
 {
-	//set up default values for imgui
-	demoUI = false;
-	color = std::make_unique<float>((new float[4] { 0.4f, 0.6f, 0.75f, 0.0f }));
-	slider = std::make_unique<int>(50);
-	input = std::make_unique<char[]>(60);
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
@@ -55,6 +50,20 @@ void Game::Initialize()
 		Graphics::Context->VSSetShader(vertexShader.Get(), 0, 0);
 		Graphics::Context->PSSetShader(pixelShader.Get(), 0, 0);
 
+		unsigned int size = sizeof(constBuffer);
+		size = (size + 15) / 16 * 16;
+		D3D11_BUFFER_DESC cbDesc = {}; // Sets struct to all zeros
+		{
+			cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			cbDesc.ByteWidth = size; // Must be a multiple of 16
+			cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+			cbDesc.MiscFlags = 0;
+			cbDesc.StructureByteStride = 0;
+		}
+		
+		Graphics::Device->CreateBuffer(&cbDesc, 0, constantBuffer.GetAddressOf());
+		Graphics::Context->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
 		// Initialize ImGui itself & platform/renderer backend
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -222,9 +231,9 @@ void Game::CreateGeometry()
 
 	
 	};
-	std::shared_ptr<Mesh> shapeA=std::make_shared<Mesh>(ARRAYSIZE(verticesA), ARRAYSIZE(indicesA), verticesA, indicesA);
-	std::shared_ptr<Mesh> shapeB = std::make_shared<Mesh>(ARRAYSIZE(verticesB), ARRAYSIZE(indicesB), verticesB, indicesB);
-	std::shared_ptr<Mesh> shapeC = std::make_shared<Mesh>(ARRAYSIZE(verticesC), ARRAYSIZE(indicesC), verticesC, indicesC);
+	std::shared_ptr<Mesh> shapeA=std::make_shared<Mesh>((int)ARRAYSIZE(verticesA), (int)ARRAYSIZE(indicesA), verticesA, indicesA);
+	std::shared_ptr<Mesh> shapeB = std::make_shared<Mesh>((int)ARRAYSIZE(verticesB), (int)ARRAYSIZE(indicesB), verticesB, indicesB);
+	std::shared_ptr<Mesh> shapeC = std::make_shared<Mesh>((int)ARRAYSIZE(verticesC), (int)ARRAYSIZE(indicesC), verticesC, indicesC);
 	meshList.push_back(shapeA);
 	meshList.push_back(shapeB);
 	meshList.push_back(shapeC);
@@ -274,9 +283,12 @@ void Game::Update(float deltaTime, float totalTime)
 	ImGui::Begin("Assignment Window");
 	ImGui::Text("Framrate: %d fps", ImGui::GetIO().Framerate);
 	ImGui::Text("Window Resolution: %dx%d", Window::Width(), Window::Height());
-	ImGui::ColorEdit4("Background Color", color.get());
-	ImGui::SliderInt("rate this ui ", slider.get(), 0, 100);
-	ImGui::InputTextWithHint("Type ", "Any Feedback for the class so far", input.get(), 60);
+	ImGui::ColorEdit4("Background Color", &color.x);
+	/*ImGui::SliderInt("rate this ui ", slider.get(), 0, 100);
+	ImGui::InputTextWithHint("Type ", "Any Feedback for the class so far", input.get(), 60);*/
+	ImGui::ColorEdit4("cb colorTint", &colorTint.x);
+	ImGui::SliderFloat3("offset", &offset.x,-1.0f,1.0f);
+
 	for (int i = 0; i < meshList.size(); i++)
 	{
 		ImGui::Text("Shape %i Indices %i, Vertices: %i",i+1, meshList[i]->GetIndexCount(), meshList[i]->GetVertexCount());
@@ -308,9 +320,17 @@ void Game::Draw(float deltaTime, float totalTime)
 	// - At the beginning of Game::Draw() before drawing *anything*
 	{
 		// Clear the back buffer (erase what's on screen) and depth buffer
-		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	color.get());
+		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	&color.x);
 		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
+	//give the cb new data 
+	constBuffer verShaderData;
+	verShaderData.colorTint = colorTint;
+	verShaderData.offset = offset;
+	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
+	Graphics::Context->Map(constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
+	memcpy(mappedBuffer.pData, &verShaderData, sizeof(verShaderData));
+	Graphics::Context->Unmap(constantBuffer.Get(), 0);
 
 	// DRAW geometry
 	// - These steps are generally repeated for EACH object you draw
