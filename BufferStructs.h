@@ -7,6 +7,6 @@ using namespace DirectX;
 struct constBuffer
 {
 	XMFLOAT4 colorTint;
-	XMFLOAT3 offset;
+	XMFLOAT4X4 world;
 	
 };

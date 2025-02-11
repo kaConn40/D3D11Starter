@@ -281,7 +281,7 @@ void Game::Update(float deltaTime, float totalTime)
 	//create window with requirements
 
 	ImGui::Begin("Assignment Window");
-	ImGui::Text("Framrate: %d fps", ImGui::GetIO().Framerate);
+	ImGui::Text("Framrate: %f fps", ImGui::GetIO().Framerate);
 	ImGui::Text("Window Resolution: %dx%d", Window::Width(), Window::Height());
 	ImGui::ColorEdit4("Background Color", &color.x);
 	/*ImGui::SliderInt("rate this ui ", slider.get(), 0, 100);
