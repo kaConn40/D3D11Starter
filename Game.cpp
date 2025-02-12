@@ -234,9 +234,27 @@ void Game::CreateGeometry()
 	std::shared_ptr<Mesh> shapeA=std::make_shared<Mesh>((int)ARRAYSIZE(verticesA), (int)ARRAYSIZE(indicesA), verticesA, indicesA);
 	std::shared_ptr<Mesh> shapeB = std::make_shared<Mesh>((int)ARRAYSIZE(verticesB), (int)ARRAYSIZE(indicesB), verticesB, indicesB);
 	std::shared_ptr<Mesh> shapeC = std::make_shared<Mesh>((int)ARRAYSIZE(verticesC), (int)ARRAYSIZE(indicesC), verticesC, indicesC);
+
+	
 	meshList.push_back(shapeA);
 	meshList.push_back(shapeB);
 	meshList.push_back(shapeC);
+
+	std::shared_ptr<GameEntity>ent1 = make_shared<GameEntity>(shapeA);
+	std::shared_ptr<GameEntity>ent2 = make_shared<GameEntity>(shapeB);
+	std::shared_ptr<GameEntity>ent3 = make_shared<GameEntity>(shapeB);
+	std::shared_ptr<GameEntity>ent4 = make_shared<GameEntity>(shapeC);
+	std::shared_ptr<GameEntity>ent5 = make_shared<GameEntity>(shapeC);
+
+	ent3->GetTransform()->MoveAbsolute(1.0f, 0.0f, 0.0f);
+	ent5->GetTransform()->MoveAbsolute(-.6f, -.4f, 0.0f);
+
+	entityList.push_back(ent1);
+	entityList.push_back(ent2);
+	entityList.push_back(ent3);
+	entityList.push_back(ent4);
+	entityList.push_back(ent5);
+
 	
 }
 
@@ -265,35 +283,35 @@ void Game::UpdateImGui(float deltaTime,float totalTime)
 	// Determine new input capture
 	Input::SetKeyboardCapture(io.WantCaptureKeyboard);
 	Input::SetMouseCapture(io.WantCaptureMouse);
-}
 
-// --------------------------------------------------------
-// Update your game here - user input, move objects, AI, etc.
-// --------------------------------------------------------
-void Game::Update(float deltaTime, float totalTime)
-{
-	// Example input checking: Quit if the escape key is pressed
-	if (Input::KeyDown(VK_ESCAPE))
-		Window::Quit();
-	std::string s{"text"};
-	// Feed fresh data to ImGui
-	UpdateImGui(deltaTime, totalTime);
 	//create window with requirements
 
 	ImGui::Begin("Assignment Window");
 	ImGui::Text("Framrate: %f fps", ImGui::GetIO().Framerate);
 	ImGui::Text("Window Resolution: %dx%d", Window::Width(), Window::Height());
 	ImGui::ColorEdit4("Background Color", &color.x);
-	/*ImGui::SliderInt("rate this ui ", slider.get(), 0, 100);
-	ImGui::InputTextWithHint("Type ", "Any Feedback for the class so far", input.get(), 60);*/
 	ImGui::ColorEdit4("cb colorTint", &colorTint.x);
-	ImGui::SliderFloat3("offset", &offset.x,-1.0f,1.0f);
 
-	for (int i = 0; i < meshList.size(); i++)
+	for (int i = 0; i < entityList.size(); i++)
 	{
-		ImGui::Text("Shape %i Indices %i, Vertices: %i",i+1, meshList[i]->GetIndexCount(), meshList[i]->GetVertexCount());
+		XMFLOAT3 pos = entityList[i]->GetTransform()->GetPosition();
+		XMFLOAT3 rot = entityList[i]->GetTransform()->GetPitchYawRoll();
+		XMFLOAT3 scl = entityList[i]->GetTransform()->GetScale();
+		ImGui::PushID(i);
+		ImGui::Text("Entity %i", i + 1);
+		ImGui::Spacing();
+		ImGui::DragFloat3("Position", &pos.x,.01f);
+		ImGui::DragFloat3("Rotation", &rot.x, .01f);
+		ImGui::DragFloat3("scale", &scl.x,.01f);
+		ImGui::Spacing();
+		ImGui::PopID();
+
+		entityList[i]->GetTransform()->SetPosition(pos);
+		entityList[i]->GetTransform()->SetRotation(rot);
+		entityList[i]->GetTransform()->SetScale(scl);
+		
 	}
-	
+
 
 	if (ImGui::Button("Open/Close demoWindow"))
 	{
@@ -306,6 +324,29 @@ void Game::Update(float deltaTime, float totalTime)
 	ImGui::CloseCurrentPopup();
 	ImGui::End();
 	// Show the demo window
+}
+
+
+// --------------------------------------------------------
+// Update your game here - user input, move objects, AI, etc.
+// --------------------------------------------------------
+void Game::Update(float deltaTime, float totalTime)
+{
+	// Example input checking: Quit if the escape key is pressed
+	if (Input::KeyDown(VK_ESCAPE))
+		Window::Quit();
+	std::string s{"text"};
+	// Feed fresh data to ImGui
+	UpdateImGui(deltaTime, totalTime);
+
+	//had to total time or it didnt work
+	float scale = ((float)cos(totalTime * 3) /2.0f);
+	entityList[3]->GetTransform()->SetScale(scale, scale, scale); 
+	entityList[2]->GetTransform()->Rotate(0, 0, (float)sin(deltaTime*.5f));
+	entityList[0]->GetTransform()->SetPosition((float)cos(totalTime)/2, (float)sin(totalTime)/2, 0);
+
+
+	
 	
 }
 
@@ -326,18 +367,11 @@ void Game::Draw(float deltaTime, float totalTime)
 	//give the cb new data 
 	constBuffer verShaderData;
 	verShaderData.colorTint = colorTint;
-	verShaderData.offset = offset;
-	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
-	Graphics::Context->Map(constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
-	memcpy(mappedBuffer.pData, &verShaderData, sizeof(verShaderData));
-	Graphics::Context->Unmap(constantBuffer.Get(), 0);
 
-	// DRAW geometry
-	// - These steps are generally repeated for EACH object you draw
-	// - Other Direct3D calls will also be necessary to do more complex things
-	for (auto& s :meshList)
+	
+	for (auto& s :entityList)
 	{
-		s->Draw();
+		s->Draw(constantBuffer,verShaderData);
 	}
 	{
 		

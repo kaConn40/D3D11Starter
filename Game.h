@@ -4,6 +4,7 @@
 #include <wrl/client.h>
 #include <memory>
 #include <vector>
+#include "GameEntity.h"
 
 class Game
 {
@@ -31,10 +32,13 @@ private:
 	DirectX::XMFLOAT4 color = { 0.4f, 0.6f, 0.75f, 0.0f };
 	std::unique_ptr<int>slider= std::make_unique<int>(50);
 	std::unique_ptr<char[]>input= std::make_unique<char[]>(60);
-	std::vector < std::shared_ptr<Mesh>>meshList;
+	
 	bool demoUI = false;
 	DirectX::XMFLOAT4 colorTint = { 0.2f, 0.8f, 0.8f, 1.0f };
-	DirectX::XMFLOAT3 offset = { 0.2f, 0.0f, 0.0f };
+
+	std::vector < std::shared_ptr<Mesh>>meshList;
+	std::vector < std::shared_ptr<GameEntity>>entityList;
+
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
 	//     Component Object Model, which DirectX objects do

@@ -1,5 +1,6 @@
 #include "Transform.h"
 
+using namespace DirectX;
 Transform::Transform()
 {
     position=XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -11,7 +12,6 @@ Transform::Transform()
     foward = XMFLOAT3(0, 0, 1);
 
     isMatrixDirty = false;
-    isDirectionDirty = false;
 
     XMStoreFloat4x4(&worldMatrix, XMMatrixIdentity());
     XMStoreFloat4x4(&worldInverseMatrix, XMMatrixIdentity());
@@ -57,6 +57,7 @@ void Transform::SetPosition(DirectX::XMFLOAT3 pos)
 {
     this->position = pos;
     isMatrixDirty = true;
+   
 }
 
 void Transform::SetRotation(float pitch, float yaw, float roll)
@@ -65,14 +66,13 @@ void Transform::SetRotation(float pitch, float yaw, float roll)
     pitchYawRoll.y = yaw;
     pitchYawRoll.z = roll;
     isMatrixDirty = true;
-    isDirectionDirty = true;
+    
 }
 
 void Transform::SetRotation(XMFLOAT3 rotation)
 {
     pitchYawRoll = rotation;
     isMatrixDirty = true;
-    isDirectionDirty = true;
 }
 
 void Transform::SetScale(float x, float y, float z)
@@ -81,7 +81,7 @@ void Transform::SetScale(float x, float y, float z)
     scale.y = y;
     scale.z = z;
     isMatrixDirty = true;
-    isDirectionDirty = true;
+    
 
 }
 
@@ -108,25 +108,52 @@ void Transform::MoveAbsolute(XMFLOAT3 offset)
 
 void Transform::Rotate(float pitch, float yaw, float roll)
 {
-
+    pitchYawRoll.x += pitch;
+    pitchYawRoll.y += yaw;
+    pitchYawRoll.z += roll;
+    isMatrixDirty = true;
 }
 
 void Transform::Rotate(XMFLOAT3 rotation)
 {
+    pitchYawRoll.x += rotation.x;
+    pitchYawRoll.y += rotation.y;
+    pitchYawRoll.z += rotation.z;
+    isMatrixDirty = true;
 }
 
 void Transform::Scale(float x, float y, float z)
 {
+    scale.x *= x;
+    scale.y *= y;
+    scale.z *= z;
+    isMatrixDirty = true;
 }
 
-void Transform::Scale(XMFLOAT3 scale)
+void Transform::Scale(XMFLOAT3 scaleBy)
 {
-}
+    scale.x *= scaleBy.x;
+    scale.y *= scaleBy.y;
+    scale.z *= scaleBy.z;
+    isMatrixDirty = true;
 
-void Transform::UpdateDirections()
-{
 }
 
 void Transform::UpdateMatrices()
 {
+    //makes sure that it will only update when theres a change to the directions
+    if (!isMatrixDirty)
+        return;
+
+    XMMATRIX tran = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
+    XMMATRIX rot = XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&pitchYawRoll));
+    XMMATRIX scal = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
+
+    XMMATRIX mWrld = scal * rot * tran;
+
+    XMStoreFloat4x4(&worldMatrix, mWrld);
+    XMStoreFloat4x4(&worldInverseMatrix, XMMatrixInverse(0, XMMatrixTranspose(mWrld)));
+    isMatrixDirty = false;
 }
+
+
