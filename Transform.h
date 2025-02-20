@@ -11,6 +11,9 @@ class Transform
 		DirectX::XMFLOAT3 GetPosition();
 		DirectX::XMFLOAT3 GetPitchYawRoll(); 
 		DirectX::XMFLOAT3 GetScale();
+		DirectX::XMFLOAT3 GetRight();
+		DirectX::XMFLOAT3 GetUp();
+		DirectX::XMFLOAT3 GetFoward();
 		DirectX::XMFLOAT4X4 GetWorldMatrix();
 		DirectX::XMFLOAT4X4 GetWorldInverseTransposeMatrix();
 
@@ -27,12 +30,15 @@ class Transform
 		//transformers
 		void MoveAbsolute(float x, float y, float z);
 		void MoveAbsolute(DirectX::XMFLOAT3 offset);
+		void MoveRelative(float x, float y, float z);
+		void MoveRelative(DirectX::XMFLOAT3 offset);
 		void Rotate(float pitch, float yaw, float roll);
 		void Rotate(DirectX::XMFLOAT3 rotation);
 		void Scale(float x, float y, float z);
 		void Scale(DirectX::XMFLOAT3 scaleBy);
 
 		void UpdateMatrices();
+		void UpdateDirections();
 
 
 	private:
@@ -45,6 +51,7 @@ class Transform
 		DirectX::XMFLOAT3 foward;
 
 		bool isMatrixDirty;
+		bool isDirectionDirty;
 		DirectX::XMFLOAT4X4 worldMatrix;
 		DirectX::XMFLOAT4X4 worldInverseMatrix;
 

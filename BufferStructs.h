@@ -8,5 +8,6 @@ struct constBuffer
 {
 	XMFLOAT4 colorTint;
 	XMFLOAT4X4 world;
-	
+	XMFLOAT4X4 view;
+	XMFLOAT4X4 projection;
 };

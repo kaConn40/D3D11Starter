@@ -14,6 +14,7 @@
 #include"imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 #include <iostream>
+#include <format> 
 // For the DirectX Math library
 using namespace DirectX;
 
@@ -24,6 +25,44 @@ using namespace DirectX;
 // --------------------------------------------------------
 void Game::Initialize()
 {
+	
+	//set up cameras
+	std::shared_ptr<Camera>cam1 = std::make_shared<Camera>(
+		XMFLOAT3(0, 0, -7.0f), //pos
+		XM_PIDIV4, //45 degrees fov
+		Window::AspectRatio(), //aspect ratio
+		0.01f,  //near clip
+		100.0f,  //far clip
+		3.0f, //move speed
+		.002f, //mouse speed
+		true //is active
+		);
+	std::shared_ptr<Camera>cam2=std::make_shared<Camera>(
+		XMFLOAT3(1.5, 0, -3.0f), //pos
+		XM_PIDIV2, //90 degrees fov
+		Window::AspectRatio(), //aspect ratio
+		0.01f,  //near clip
+		100.0f,  //far clip
+		3.0f, //move speed
+		.002f, //mouse speed
+		false //is active
+	);
+	std::shared_ptr<Camera>cam3 = std::make_shared<Camera>(
+		XMFLOAT3(0, 2, -5.0f), //pos
+		XM_PIDIV2, //90 degrees fov
+		Window::AspectRatio(), //aspect ratio
+		0.01f,  //near clip
+		100.0f,  //far clip
+		3.0f, //move speed
+		.002f, //mouse speed
+		false //is active
+	);
+	cams.push_back(cam1);
+	cams.push_back(cam2);
+	cams.push_back(cam3);
+	//hold which ever cam is being used and let us change it
+
+	activeCam = cam1;
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
@@ -265,6 +304,11 @@ void Game::CreateGeometry()
 // --------------------------------------------------------
 void Game::OnResize()
 {
+	for (auto& c:cams)
+	{
+		c->UpdateProjectionMatrix(Window::AspectRatio());
+	}
+	
 }
 /// <summary>
 /// helper method for game update
@@ -291,26 +335,65 @@ void Game::UpdateImGui(float deltaTime,float totalTime)
 	ImGui::Text("Window Resolution: %dx%d", Window::Width(), Window::Height());
 	ImGui::ColorEdit4("Background Color", &color.x);
 	ImGui::ColorEdit4("cb colorTint", &colorTint.x);
+	
 
-	for (int i = 0; i < entityList.size(); i++)
+	if (ImGui::TreeNode("Entites"))
 	{
-		XMFLOAT3 pos = entityList[i]->GetTransform()->GetPosition();
-		XMFLOAT3 rot = entityList[i]->GetTransform()->GetPitchYawRoll();
-		XMFLOAT3 scl = entityList[i]->GetTransform()->GetScale();
-		ImGui::PushID(i);
-		ImGui::Text("Entity %i", i + 1);
-		ImGui::Spacing();
-		ImGui::DragFloat3("Position", &pos.x,.01f);
-		ImGui::DragFloat3("Rotation", &rot.x, .01f);
-		ImGui::DragFloat3("scale", &scl.x,.01f);
-		ImGui::Spacing();
-		ImGui::PopID();
+		for (int i = 0; i < entityList.size(); i++)
+		{
+			XMFLOAT3 pos = entityList[i]->GetTransform()->GetPosition();
+			XMFLOAT3 rot = entityList[i]->GetTransform()->GetPitchYawRoll();
+			XMFLOAT3 scl = entityList[i]->GetTransform()->GetScale();
+			ImGui::PushID(entityList[i].get());
 
-		entityList[i]->GetTransform()->SetPosition(pos);
-		entityList[i]->GetTransform()->SetRotation(rot);
-		entityList[i]->GetTransform()->SetScale(scl);
-		
+			if (ImGui::TreeNode("Entity Node", "Entity %i", i + 1))
+			{
+				ImGui::DragFloat3("Position", &pos.x, .01f);
+				ImGui::DragFloat3("Rotation", &rot.x, .01f);
+				ImGui::DragFloat3("scale", &scl.x, .01f);
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
+
+			entityList[i]->GetTransform()->SetPosition(pos);
+			entityList[i]->GetTransform()->SetRotation(rot);
+			entityList[i]->GetTransform()->SetScale(scl);
+
+		}
+		ImGui::TreePop();
 	}
+	//create buttons to switch cameras
+	std::string s;
+	for(int i=0;i<cams.size();i++)
+	{
+		ImGui::PushID(cams[i].get());
+		s = std::format("Camera {}", i + 1);
+		if (ImGui::RadioButton(s.c_str(), cams[i]->isActive))
+		{
+			activeCam.get()->isActive=false;
+			activeCam=cams[i];
+			activeCam.get()->isActive = true;
+		}
+		if(i<cams.size()-1) ImGui::SameLine();
+		ImGui::PopID();
+	}
+	
+		
+		
+
+	
+	//set the info up and let it be changed by ui
+	XMFLOAT3 pos = activeCam->GetTransform()->GetPosition();
+	XMFLOAT3 rot = activeCam->GetTransform()->GetPitchYawRoll();
+	float fov = activeCam->GetFOV();
+	if (ImGui::DragFloat3("Position", &pos.x, 0.01f))
+		activeCam->GetTransform()->SetPosition(pos);
+
+	if (ImGui::DragFloat3("Rotation (Radians)", &rot.x, 0.01f))
+		activeCam->GetTransform()->SetRotation(rot);
+
+	if (ImGui::DragFloat("FOV", &fov, 0.01f, XM_PIDIV4,XM_PIDIV2))
+		activeCam->SetFOV(fov);
 
 
 	if (ImGui::Button("Open/Close demoWindow"))
@@ -335,9 +418,13 @@ void Game::Update(float deltaTime, float totalTime)
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::KeyDown(VK_ESCAPE))
 		Window::Quit();
-	std::string s{"text"};
+	
 	// Feed fresh data to ImGui
 	UpdateImGui(deltaTime, totalTime);
+	//check to see if camera changed
+
+	activeCam->Update(deltaTime);
+	
 
 	//had to total time or it didnt work
 	float scale = ((float)cos(totalTime * 3) /2.0f);
@@ -368,11 +455,11 @@ void Game::Draw(float deltaTime, float totalTime)
 	constBuffer verShaderData;
 	verShaderData.colorTint = colorTint;
 
-	
-	for (auto& s :entityList)
+	for (auto& s : entityList)
 	{
-		s->Draw(constantBuffer,verShaderData);
+		s->Draw(constantBuffer, verShaderData, activeCam);
 	}
+	
 	{
 		
 

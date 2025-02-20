@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include "GameEntity.h"
+#include"Camera.h"
 
 class Game
 {
@@ -38,6 +39,8 @@ private:
 
 	std::vector < std::shared_ptr<Mesh>>meshList;
 	std::vector < std::shared_ptr<GameEntity>>entityList;
+	std::vector <std::shared_ptr<Camera>>cams;
+	std::shared_ptr<Camera>activeCam;
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
