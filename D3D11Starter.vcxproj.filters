@@ -9,15 +9,18 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Shaders">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Header Files\ImGui">
       <UniqueIdentifier>{e823a3f4-854a-401a-b858-c762745c45d1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\ImGui">
       <UniqueIdentifier>{43c19b40-3273-4c1f-919b-a2afff3b8d46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="OBJ">
+      <UniqueIdentifier>{484e6aa4-20c5-40ee-89a9-4cab75a5d441}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -70,6 +73,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -125,10 +134,13 @@
     <ClInclude Include="Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BufferStructs.h">
+    <ClInclude Include="Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
+    <ClInclude Include="SimpleShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -139,5 +151,28 @@
     <FxCompile Include="VertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="Assets\Models\cube.obj">
+      <Filter>OBJ</Filter>
+    </Object>
+    <Object Include="Assets\Models\cylinder.obj">
+      <Filter>OBJ</Filter>
+    </Object>
+    <Object Include="Assets\Models\helix.obj">
+      <Filter>OBJ</Filter>
+    </Object>
+    <Object Include="Assets\Models\quad.obj">
+      <Filter>OBJ</Filter>
+    </Object>
+    <Object Include="Assets\Models\quad_double_sided.obj">
+      <Filter>OBJ</Filter>
+    </Object>
+    <Object Include="Assets\Models\sphere.obj">
+      <Filter>OBJ</Filter>
+    </Object>
+    <Object Include="Assets\Models\torus.obj">
+      <Filter>OBJ</Filter>
+    </Object>
   </ItemGroup>
 </Project>

@@ -3,20 +3,24 @@
 #include <wrl/client.h>
 #include "Graphics.h"
 #include "Vertex.h"
-
+#include "fstream"
+#include <stdexcept>
 #include <memory> 
+#include <DirectXMath.h>
+#include <vector>
 class Mesh
 {
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
-
+		const char* name;
 		int indices;
 		int vertices;
 
 	public:
 		//OOP
 		Mesh(int vertNum,int indNum, Vertex* vertexList, unsigned int* indexList);
+		Mesh(const char* name, const char* file);
 		~Mesh();
 		Mesh(const Mesh&) = delete; // Remove copy constructor
 		Mesh& operator=(const Mesh&) = delete; // Remove copy-assignment operator
@@ -36,6 +40,8 @@ class Mesh
 
 		//sets buffers and draws using the correct number of indices
 		void Draw();
+
+		void CreateBuffers(Vertex* vertList,int vertNum,unsigned int* indList,int indNum);
 
 };
 

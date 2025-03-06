@@ -6,6 +6,8 @@
 #include <vector>
 #include "GameEntity.h"
 #include"Camera.h"
+#include "Material.h"
+#include "SimpleShader.h"
 
 class Game
 {
@@ -25,7 +27,6 @@ public:
 	
 private:
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
-	void LoadShaders();
 	void CreateGeometry();
 	void UpdateImGui(float deltaTime, float totalTime);
 
@@ -36,7 +37,7 @@ private:
 	
 	bool demoUI = false;
 	DirectX::XMFLOAT4 colorTint = { 0.2f, 0.8f, 0.8f, 1.0f };
-
+	std::vector < std::shared_ptr<Material>>matList;
 	std::vector < std::shared_ptr<Mesh>>meshList;
 	std::vector < std::shared_ptr<GameEntity>>entityList;
 	std::vector <std::shared_ptr<Camera>>cams;
@@ -47,16 +48,7 @@ private:
 	//     Component Object Model, which DirectX objects do
 	//  - More info here: https://github.com/Microsoft/DirectXTK/wiki/ComPtr
 
-	// Buffers to hold actual geometry data
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
-
-	//constant buffer
-	Microsoft::WRL::ComPtr<ID3D11Buffer> constantBuffer;
-	// Shaders and shader-related constructs
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	
 
 
 	
