@@ -35,16 +35,19 @@ void GameEntity::SetMaterial(std::shared_ptr<Material> mat)
 }
 void GameEntity::Draw(std::shared_ptr<Camera> camera)
 {
-    mat->GetVertexShader()->SetShader();
-    mat->GetPixelShader()->SetShader();
     std::shared_ptr<SimpleVertexShader> vs = mat->GetVertexShader();
+    std::shared_ptr<SimplePixelShader> ps = mat->GetPixelShader();
+    vs->SetShader();
+    ps->SetShader();
+    XMFLOAT4 color = mat->GetColorTint();
 
-    vs->SetFloat4("colorTint", mat->GetColorTint());
     vs->SetMatrix4x4("world", transform->GetWorldMatrix());
     vs->SetMatrix4x4("view", camera->GetView());
     vs->SetMatrix4x4("projection", camera->GetProjection());
     vs->CopyAllBufferData();
 
+    ps->SetFloat3("colorTint", &color.x);
+    ps->CopyAllBufferData();
     
     mesh->Draw();
 }

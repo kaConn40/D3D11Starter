@@ -31,7 +31,7 @@ void Game::Initialize()
 	
 	//set up cameras
 	std::shared_ptr<Camera>cam1 = std::make_shared<Camera>(
-		XMFLOAT3(0, 0, -7.0f), //pos
+		XMFLOAT3(0, 0, -30.0f), //pos
 		XM_PIDIV4, //45 degrees fov
 		Window::AspectRatio(), //aspect ratio
 		0.01f,  //near clip
@@ -123,6 +123,7 @@ void Game::CreateGeometry()
 	XMFLOAT4 blue = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
 	XMFLOAT4 white = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	XMFLOAT4 yellow = XMFLOAT4(1.f, 1.0f, 0.4f, 1.0f); 
+	XMFLOAT4 purple = XMFLOAT4(0.75f, 0, 0.6f, 1.0f);
 
 	std::shared_ptr<SimpleVertexShader> vs = std::make_shared<SimpleVertexShader>(
 		Graphics::Device, Graphics::Context, FixPath(L"VertexShader.cso").c_str());
@@ -130,28 +131,62 @@ void Game::CreateGeometry()
 	std::shared_ptr<SimplePixelShader> ps = std::make_shared<SimplePixelShader>(
 		Graphics::Device, Graphics::Context, FixPath(L"PixelShader.cso").c_str());
 
-	std::shared_ptr<Material> mat1 = std::make_shared<Material>(ps, vs, red);
-	std::shared_ptr<Material> mat2 = std::make_shared<Material>(ps, vs, blue);
-	std::shared_ptr<Material> mat3 = std::make_shared<Material>(ps, vs, green);
+	std::shared_ptr<SimplePixelShader>uvDebug=std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"DebugUvsPS.cso").c_str());
+	std::shared_ptr<SimplePixelShader>normalsDebug = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"DebugNormalsPS.cso").c_str());
+	std::shared_ptr<SimplePixelShader>CustomPS = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"CustomPS.cso").c_str());
+
+	std::shared_ptr<Material>matRed = std::make_shared<Material>(ps, vs, red);
+	std::shared_ptr<Material>matGreen = std::make_shared<Material>(ps, vs, green);
+	std::shared_ptr<Material>matYellow = std::make_shared<Material>(ps, vs, yellow);
+	std::shared_ptr<Material> matUV = std::make_shared<Material>(uvDebug, vs, white);
+	std::shared_ptr<Material> matNorm = std::make_shared<Material>(normalsDebug, vs, white);
+	std::shared_ptr<Material>customMat = std::make_shared<Material>(CustomPS, vs, purple);
 
 
-
-
-
-
-
-	//std::cout << FixPath("Assets/Models/cube.obj").c_str() << std::endl;
-	
-	//std::shared_ptr<Mesh> cube=std::make_shared<Mesh>("Cube",FixPath("../../Assets/Models/cube.obj").c_str());
-	//std::shared_ptr<Mesh> cyl = std::make_shared<Mesh>("Cylinder", FixPath("../../Assets/Models/cylinder.obj").c_str());
-	//std::shared_ptr<Mesh> helix = std::make_shared<Mesh>("Helix", FixPath("../../Assets/Models/sphere.obj").c_str());
-	//std::shared_ptr<Mesh> quad = std::make_shared<Mesh>("Quad", FixPath("../../Assets/Models/sphere.obj").c_str());
-	//std::shared_ptr<Mesh> quadDS= std::make_shared<Mesh>("Double Sided Quad", FixPath("../../Assets/Models/sphere.obj").c_str());
-	//std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>("Sphere", FixPath("../../Assets/Models/sphere.obj").c_str());
-	//std::shared_ptr<Mesh> torus = std::make_shared<Mesh>("Torus", FixPath("../../Assets/Models/sphere.obj").c_str());
 
 	
+	
+	std::shared_ptr<Mesh> cube=std::make_shared<Mesh>("Cube",FixPath("../../Assets/Models/cube.obj").c_str());
+	std::shared_ptr<Mesh> cyl = std::make_shared<Mesh>("Cylinder", FixPath("../../Assets/Models/cylinder.obj").c_str());
+	std::shared_ptr<Mesh> helix = std::make_shared<Mesh>("Helix", FixPath("../../Assets/Models/helix.obj").c_str());
+	std::shared_ptr<Mesh> quad = std::make_shared<Mesh>("Quad", FixPath("../../Assets/Models/quad.obj").c_str());
+	std::shared_ptr<Mesh> quadDS= std::make_shared<Mesh>("Double Sided Quad", FixPath("../../Assets/Models/quad_double_sided.obj").c_str());
+	std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>("Sphere", FixPath("../../Assets/Models/sphere.obj").c_str());
+	std::shared_ptr<Mesh> torus = std::make_shared<Mesh>("Torus", FixPath("../../Assets/Models/torus.obj").c_str());
+	meshList.insert(meshList.begin(), { cube,cyl,helix,quad,quadDS,sphere, torus });
+	
+	entityList.push_back(std::make_shared<GameEntity>(cube,matGreen));
+	entityList.push_back(std::make_shared<GameEntity>(cyl, matRed));
+	entityList.push_back(std::make_shared<GameEntity>(helix, matYellow));
+	entityList.push_back(std::make_shared<GameEntity>(quad, matRed));
+	entityList.push_back(std::make_shared<GameEntity>(quadDS, matGreen));
+	entityList.push_back(std::make_shared<GameEntity>(sphere, customMat));
+	entityList.push_back(std::make_shared<GameEntity>(torus, matYellow));
+	
+	
 
+	
+	entityList[0]->GetTransform()->MoveAbsolute(-8, 0, 0);
+	entityList[1]->GetTransform()->MoveAbsolute(-5, 0, 0);
+	entityList[2]->GetTransform()->MoveAbsolute(-3, 0, 0);
+	entityList[3]->GetTransform()->MoveAbsolute(0, -1, 0);
+	entityList[4]->GetTransform()->MoveAbsolute(2, -1, 0);
+	entityList[5]->GetTransform()->MoveAbsolute(5, 0, 0);
+	entityList[6]->GetTransform()->MoveAbsolute(8, 0, 0);
+	int count = (int)entityList.size();
+	for (int i=0;i<count;i++)
+	{
+		std::shared_ptr<GameEntity>uvs = std::make_shared<GameEntity>(entityList[i]->GetMesh(), matUV);
+		std::shared_ptr<GameEntity>norms = std::make_shared<GameEntity>(entityList[i]->GetMesh(), matNorm);
+		uvs->GetTransform()->MoveAbsolute(entityList[i]->GetTransform()->GetPosition());
+		uvs->GetTransform()->MoveAbsolute(0, 3, 0);
+
+		norms->GetTransform()->MoveAbsolute(entityList[i]->GetTransform()->GetPosition());
+		norms->GetTransform()->MoveAbsolute(0, 6, 0);
+
+		entityList.push_back(uvs);
+		entityList.push_back(norms);
+	}
 
 	
 }
@@ -196,31 +231,31 @@ void Game::UpdateImGui(float deltaTime,float totalTime)
 	ImGui::ColorEdit4("cb colorTint", &colorTint.x);
 	
 
-	if (ImGui::TreeNode("Entites"))
-	{
-		for (int i = 0; i < entityList.size(); i++)
-		{
-			XMFLOAT3 pos = entityList[i]->GetTransform()->GetPosition();
-			XMFLOAT3 rot = entityList[i]->GetTransform()->GetPitchYawRoll();
-			XMFLOAT3 scl = entityList[i]->GetTransform()->GetScale();
-			ImGui::PushID(entityList[i].get());
+	//if (ImGui::TreeNode("Entites"))
+	//{
+	//	for (int i = 0; i < entityList.size(); i++)
+	//	{
+	//		XMFLOAT3 pos = entityList[i]->GetTransform()->GetPosition();
+	//		XMFLOAT3 rot = entityList[i]->GetTransform()->GetPitchYawRoll();
+	//		XMFLOAT3 scl = entityList[i]->GetTransform()->GetScale();
+	//		ImGui::PushID(entityList[i].get());
 
-			if (ImGui::TreeNode("Entity Node", "Entity %i", i + 1))
-			{
-				ImGui::DragFloat3("Position", &pos.x, .01f);
-				ImGui::DragFloat3("Rotation", &rot.x, .01f);
-				ImGui::DragFloat3("scale", &scl.x, .01f);
-				ImGui::TreePop();
-			}
-			ImGui::PopID();
+	//		if (ImGui::TreeNode("Entity Node", "Entity %i", i + 1))
+	//		{
+	//			ImGui::DragFloat3("Position", &pos.x, .01f);
+	//			ImGui::DragFloat3("Rotation", &rot.x, .01f);
+	//			ImGui::DragFloat3("scale", &scl.x, .01f);
+	//			ImGui::TreePop();
+	//		}
+	//		ImGui::PopID();
 
-			entityList[i]->GetTransform()->SetPosition(pos);
-			entityList[i]->GetTransform()->SetRotation(rot);
-			entityList[i]->GetTransform()->SetScale(scl);
+	//		entityList[i]->GetTransform()->SetPosition(pos);
+	//		entityList[i]->GetTransform()->SetRotation(rot);
+	//		entityList[i]->GetTransform()->SetScale(scl);
 
-		}
-		ImGui::TreePop();
-	}
+	//	}
+	//	ImGui::TreePop();
+	//}
 	//create buttons to switch cameras
 	std::string s;
 	for(int i=0;i<cams.size();i++)
@@ -285,11 +320,7 @@ void Game::Update(float deltaTime, float totalTime)
 	activeCam->Update(deltaTime);
 	
 
-	//had to total time or it didnt work
-	float scale = ((float)cos(totalTime * 3) /2.0f);
-	entityList[3]->GetTransform()->SetScale(scale, scale, scale); 
-	entityList[2]->GetTransform()->Rotate(0, 0, (float)sin(deltaTime*.5f));
-	entityList[0]->GetTransform()->SetPosition((float)cos(totalTime)/2, (float)sin(totalTime)/2, 0);
+	
 
 
 	

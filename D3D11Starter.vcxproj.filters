@@ -151,28 +151,14 @@
     <FxCompile Include="VertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="Assets\Models\cube.obj">
-      <Filter>OBJ</Filter>
-    </Object>
-    <Object Include="Assets\Models\cylinder.obj">
-      <Filter>OBJ</Filter>
-    </Object>
-    <Object Include="Assets\Models\helix.obj">
-      <Filter>OBJ</Filter>
-    </Object>
-    <Object Include="Assets\Models\quad.obj">
-      <Filter>OBJ</Filter>
-    </Object>
-    <Object Include="Assets\Models\quad_double_sided.obj">
-      <Filter>OBJ</Filter>
-    </Object>
-    <Object Include="Assets\Models\sphere.obj">
-      <Filter>OBJ</Filter>
-    </Object>
-    <Object Include="Assets\Models\torus.obj">
-      <Filter>OBJ</Filter>
-    </Object>
+    <FxCompile Include="DebugUvPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="DebugNormalsPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="CustomPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
