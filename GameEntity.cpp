@@ -35,6 +35,7 @@ void GameEntity::SetMaterial(std::shared_ptr<Material> mat)
 }
 void GameEntity::Draw(std::shared_ptr<Camera> camera)
 {
+    
     std::shared_ptr<SimpleVertexShader> vs = mat->GetVertexShader();
     std::shared_ptr<SimplePixelShader> ps = mat->GetPixelShader();
     vs->SetShader();
@@ -48,6 +49,7 @@ void GameEntity::Draw(std::shared_ptr<Camera> camera)
 
     ps->SetFloat3("colorTint", &color.x);
     ps->CopyAllBufferData();
+    mat->PrepareMaterials();
     
     mesh->Draw();
 }
