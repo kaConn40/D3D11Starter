@@ -134,7 +134,7 @@ void Game::CreateGeometry()
 		sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 		sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 		sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
-		sampDesc.MaxAnisotropy = 16.0f;
+		sampDesc.MaxAnisotropy = 16;
 		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	}
 	Graphics::Device->CreateSamplerState(&sampDesc, sampler.GetAddressOf());
