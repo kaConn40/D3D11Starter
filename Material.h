@@ -13,7 +13,7 @@ class Material
 {
 public:
 
-	Material(std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader>vs, DirectX::XMFLOAT4 colorTint, DirectX::XMFLOAT2 uvOffset = { 0,0 }, DirectX::XMFLOAT2 uvScale={1,1});
+	Material(std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader>vs, DirectX::XMFLOAT4 colorTint, float roughness, DirectX::XMFLOAT2 uvOffset = { 0,0 }, DirectX::XMFLOAT2 uvScale = { 1,1 });
 	//getters
 	std::shared_ptr<SimplePixelShader> GetPixelShader();
 	std::shared_ptr<SimpleVertexShader> GetVertexShader();
@@ -22,6 +22,7 @@ public:
 	DirectX::XMFLOAT2 GetUVScale();
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> GetTextureSRVMap();
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11SamplerState>> GetSamplerMap();
+	float GetRoughness();
 
 	//setters
 	void SetPixelShader(std::shared_ptr<SimplePixelShader> ps);
@@ -31,6 +32,7 @@ public:
 	void AddSampler(std::string name, Microsoft::WRL::ComPtr<ID3D11SamplerState>sampler);
 	void SetUVOffset(DirectX::XMFLOAT2 offset);
 	void SetUVScale(DirectX::XMFLOAT2 scale);
+	void SetRoughness(float roughness);
 	void PrepareMaterials();
 private:
 	std::shared_ptr<SimplePixelShader> ps;
@@ -40,6 +42,7 @@ private:
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> textureSRVs;
 	DirectX::XMFLOAT2 uvOffset = { 0,0 };
 	DirectX::XMFLOAT2 uvScale = { 1,1 };
+	float roughness;
 
 };
 

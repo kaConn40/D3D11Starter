@@ -8,6 +8,7 @@
 #include"Camera.h"
 #include "Material.h"
 #include "SimpleShader.h"
+#include "Lights.h"
 
 class Game
 {
@@ -42,6 +43,8 @@ private:
 	std::vector < std::shared_ptr<GameEntity>>entityList;
 	std::vector <std::shared_ptr<Camera>>cams;
 	std::shared_ptr<Camera>activeCam;
+	DirectX::XMFLOAT3 ambientColor{ 0.1f,0.1f,0.25f };
+	std::vector<Light>lights;
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the

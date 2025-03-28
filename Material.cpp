@@ -1,7 +1,8 @@
 #include "Material.h"
 
-Material::Material(std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader> vs, DirectX::XMFLOAT4 colorTint, DirectX::XMFLOAT2 uvOffset, DirectX::XMFLOAT2 uvScale) :
-    ps(ps), vs(vs), colorTint(colorTint),uvOffset(uvOffset),uvScale(uvScale)
+
+Material::Material(std::shared_ptr<SimplePixelShader> ps, std::shared_ptr<SimpleVertexShader> vs, DirectX::XMFLOAT4 colorTint, float roughness, DirectX::XMFLOAT2 uvOffset, DirectX::XMFLOAT2 uvScale) :
+      ps(ps), vs(vs), colorTint(colorTint),uvOffset(uvOffset),uvScale(uvScale), roughness(roughness)
 {
 }
 
@@ -38,6 +39,11 @@ std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>
 std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D11SamplerState>> Material::GetSamplerMap()
 {
     return samplers;
+}
+
+float Material::GetRoughness()
+{
+    return roughness;
 }
 
 
@@ -77,10 +83,23 @@ void Material::SetUVScale(DirectX::XMFLOAT2 scale)
     uvScale = scale;
 }
 
+void Material::SetRoughness(float roughness)
+{
+    //keep
+    if (roughness > 1)
+        roughness = 1;
+    else if (roughness < 0)
+        roughness = 0;
+
+
+    this->roughness = roughness;
+}
+
 void Material::PrepareMaterials()
 {
     ps->SetFloat2("uvOffset", uvOffset);
     ps->SetFloat2("uvScale", uvScale);
+    ps->SetFloat("roughness", roughness);
     for (auto& t : textureSRVs)
     {
         ps->SetShaderResourceView(t.first.c_str(), t.second);

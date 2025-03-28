@@ -1,8 +1,14 @@
+#include "ShaderInclude.hlsli"
+
 cbuffer ExternalData : register(b0)
 {
     float3 colorTint;
+    float roughness;
     float2 uvOffset;
     float2 uvScale;
+    float3 cameraPosition;
+    float3 ambient;
+    Light lights[5];
 }
 
 Texture2D SurfaceTexture : register(t0); // "t" registers for textures
@@ -12,24 +18,35 @@ SamplerState BasicSampler : register(s0); // "s" registers for sampler
 // - The name of the struct itself is unimportant
 // - The variable names don't have to match other shaders (just the semantics)
 // - Each variable must have a semantic, which defines its usage
-struct VertexToPixel
-{
-	// Data type
-	//  |
-	//  |   Name          Semantic
-	//  |    |                |
-	//  v    v                v
-	float4 screenPosition	: SV_POSITION;
-    float2 uv				: TEXCOORD;
-    float3 normal			: NORMAL;
-};
 
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
-    input.normal = normalize(input.normal);
-    input.uv = input.uv * uvScale + uvOffset;
-    float4 surfaceColor = SurfaceTexture.Sample(BasicSampler, input.uv);
+    float3 surfaceColor = SurfaceTexture.Sample(BasicSampler, input.uv).xyz;
     surfaceColor *= float4(colorTint, 1);
-    return surfaceColor;
+   input.uv = input.uv * uvScale + uvOffset;
+    input.normal = normalize(input.normal);
+   
+    float3 totalLight = ambient * surfaceColor.xyz;
+    for (int i = 0; i < 5; i++)
+    {
+        Light light = lights[i];
+        light.Direction = normalize(light.Direction);
+        switch (light.Type)
+        {
+            case LIGHT_TYPE_DIRECTIONAL:
+                totalLight += Directional(light, input.normal, input.worldPos, cameraPosition, surfaceColor, roughness);
+                break;
+            case LIGHT_TYPE_POINT:
+                totalLight += Point(light, input.normal, input.worldPos, cameraPosition, surfaceColor, roughness);
+                break;
+            case LIGHT_TYPE_SPOT:
+                totalLight += Spot(light, input.normal, input.worldPos, cameraPosition, surfaceColor, roughness);
+                break;
+
+        }
+    }
+    
+    return float4(totalLight, 1);
+
 }

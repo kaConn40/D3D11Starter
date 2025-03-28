@@ -32,12 +32,12 @@ void Game::Initialize()
 	
 	//set up cameras
 	std::shared_ptr<Camera>cam1 = std::make_shared<Camera>(
-		XMFLOAT3(0, 2, -10.0f), //pos
+		XMFLOAT3(-3, 2, -20.0f), //pos
 		XM_PIDIV4, //45 degrees fov
 		Window::AspectRatio(), //aspect ratio
 		0.01f,  //near clip
 		100.0f,  //far clip
-		3.0f, //move speed
+		5.0f, //move speed
 		.002f, //mouse speed
 		true //is active
 		);
@@ -163,17 +163,17 @@ void Game::CreateGeometry()
 
 
 
-	std::shared_ptr<Material>matDangerRockwall = std::make_shared<Material>(combo, vs, white);
+	std::shared_ptr<Material>matDangerRockwall = std::make_shared<Material>(ps, vs, white,.5f);
 	matDangerRockwall->AddSampler("BasicSampler", sampler);
 	matDangerRockwall->AddTextureSRV("SurfaceTexture", rockWallSRV);
-	matDangerRockwall->AddTextureSRV("SpectralTexture", dangerSignSRV);
+	
 
-	std::shared_ptr<Material>matPlanks = std::make_shared<Material>(ps, vs, white);
+	std::shared_ptr<Material>matPlanks = std::make_shared<Material>(ps, vs, white,.02f);
 	matPlanks->AddSampler("BasicSampler", sampler);
 	matPlanks->AddTextureSRV("SurfaceTexture", wornPlanksSRV);
+	
 
-
-	std::shared_ptr<Material>matRockwall = std::make_shared<Material>(ps, vs, purple);
+	std::shared_ptr<Material>matRockwall = std::make_shared<Material>(ps, vs, white, .02f);
 	matRockwall->AddSampler("BasicSample", sampler);
 	matRockwall->AddTextureSRV("SurfaceTexture", rockWallSRV);
 	
@@ -187,15 +187,71 @@ void Game::CreateGeometry()
 	std::shared_ptr<Mesh> torus = std::make_shared<Mesh>("Torus", FixPath("../../Assets/Models/torus.obj").c_str());
 	meshList.insert(meshList.begin(), { cube,cyl,helix,quad,quadDS,sphere, torus });
 
-	entityList.push_back(std::make_shared<GameEntity>(cube,matDangerRockwall));
+	entityList.push_back(std::make_shared<GameEntity>(cube,matRockwall));
+
 	entityList.push_back(std::make_shared<GameEntity>(cyl, matPlanks));
 	entityList.push_back(std::make_shared<GameEntity>(helix, matRockwall));
+	entityList.push_back(std::make_shared<GameEntity>(sphere, matPlanks));
+	entityList.push_back(std::make_shared<GameEntity>(torus, matRockwall));
+	entityList.push_back(std::make_shared<GameEntity>(quad, matPlanks));
+	entityList.push_back(std::make_shared<GameEntity>(quadDS, matRockwall));
+	float x = -12;
+	for (auto& e : entityList)
+	{
+		e->GetTransform()->MoveAbsolute(x, 0, 0);
+		x += 3;
+	}
+	Light light1 = {};
+	light1.Type = LIGHT_TYPE_DIRECTIONAL;
+	light1.Color = XMFLOAT3(1.0,0.0,0.0);
+	light1.Direction = XMFLOAT3(-1, 0, 0);
+	light1.Intensity = 1.0f;
+
+	Light light2 = {};
+	light2.Type = LIGHT_TYPE_DIRECTIONAL;
+	light2.Color = XMFLOAT3(0.0, 1.0, 0.0);
+	light2.Direction = XMFLOAT3(0, -1, 0);
+	light2.Intensity = 1.0f;
+
+	Light light3 = {};
+	light3.Type = LIGHT_TYPE_DIRECTIONAL;
+	light3.Color = XMFLOAT3(0.0, 0.0, 1.0);
+	light3.Direction = XMFLOAT3(0, 0, -1);
+	light3.Intensity = .0f;
 	
 
+	Light light4 = {};
+	light4.Type = LIGHT_TYPE_POINT;
+	light4.Color = XMFLOAT3(1.0,1.0, 1.0);
+	light4.Position = XMFLOAT3(-1.5, 0, 0);
+	light4.Intensity = 8.0f;
+	light4.Range = 8.0f;
+
+	Light light5 = {};
+	light5.Type = LIGHT_TYPE_SPOT;
+	light5.Color = XMFLOAT3(1.0, 1.0, 1.0);
+	light5.Position = XMFLOAT3(3.2, .5,0.2 );
+	light5.Direction=XMFLOAT3(-1, 0, 0);
+	light5.Range = 40;
+	light5.SpotInnerAngle = XMConvertToRadians(30.0f);
+	light5.SpotOuterAngle = XMConvertToRadians(20.0f);
+	light5.Intensity = 4.0f;
+
+	lights.push_back(light1);
+	lights.push_back(light2);
+	lights.push_back(light3);
+	lights.push_back(light4);
+	lights.push_back(light5);
+		for (int i = 0; i < lights.size(); i++)
+		if (lights[i].Type != LIGHT_TYPE_POINT)
+			XMStoreFloat3(
+				&lights[i].Direction, 
+				XMVector3Normalize(XMLoadFloat3(&lights[i].Direction))
+			);
 	
-	entityList[0]->GetTransform()->MoveAbsolute(0, 0, 0);
-	entityList[1]->GetTransform()->MoveAbsolute(3, 0, 0);
-	entityList[2]->GetTransform()->MoveAbsolute(6, 0, 0);
+	
+	light1.Color = XMFLOAT3(0.0, 1.0, 0.0);
+
 
 
 	
@@ -240,32 +296,53 @@ void Game::UpdateImGui(float deltaTime,float totalTime)
 	ImGui::ColorEdit4("Background Color", &color.x);
 	ImGui::ColorEdit4("cb colorTint", &colorTint.x);
 
-	if (ImGui::TreeNode("Entites"))
+	if (ImGui::TreeNode("Lights"))
 	{
-		for (int i = 0; i < entityList.size(); i++)
+		int count = 1;
+		for (auto& l:lights)
 		{
-			XMFLOAT4 colorTint = entityList[i]->GetMaterial()->GetColorTint();
-			XMFLOAT2 uvScale = entityList[i]->GetMaterial()->GetUVScale();
-			XMFLOAT2 uvOffset = entityList[i]->GetMaterial()->GetUVOffset();
-			ImGui::PushID(entityList[i].get());
-
-			if (ImGui::TreeNode("Entity Node", "Entity %i", i + 1))
+			
+			ImGui::PushID(&l);
+			std::string lightType;
+			switch (l.Type)
 			{
-				ImGui::DragFloat3("color", &colorTint.x, .01f);
-				ImGui::DragFloat2("offset", &uvOffset.x, .01f);
-				ImGui::DragFloat2("scale", &uvScale.x, .01f);
-				for (auto& im : entityList[i]->GetMaterial()->GetTextureSRVMap())
-				{
-					ImGui::Text(im.first.c_str());
-					ImGui::Image(long long(im.second.Get()), ImVec2(256, 256));
-				}
-				ImGui::TreePop();
+			case LIGHT_TYPE_DIRECTIONAL:
+				lightType = "Directional";break;
+			case LIGHT_TYPE_POINT: lightType = "Point"; break;
+			case LIGHT_TYPE_SPOT: lightType = "Spot"; break;
 			}
-			ImGui::PopID();
+			
+			if (ImGui::TreeNode("Lights", "light %i %s", count, lightType.c_str()))
+			{
+				
+				if (l.Type == LIGHT_TYPE_DIRECTIONAL || l.Type == LIGHT_TYPE_SPOT)
+				{
+					ImGui::DragFloat3("Direction", &l.Direction.x, .1f);
+					XMVECTOR dirNorm = XMVector3Normalize(XMLoadFloat3(&l.Direction));
+					XMStoreFloat3(&l.Direction, dirNorm);
+				
+				}
+				if (l.Type == LIGHT_TYPE_POINT || l.Type == LIGHT_TYPE_SPOT)
+				{
+					ImGui::DragFloat3("Pos", &l.Position.x, 0.1f);
+					ImGui::SliderFloat("Range", &l.Range, .1f, 50.0f);
+					
 
-			entityList[i]->GetMaterial()->SetColorTint(colorTint);
-			entityList[i]->GetMaterial()->SetUVOffset(uvOffset);
-			entityList[i]->GetMaterial()->SetUVScale(uvScale);
+				}
+
+				
+				
+			
+					ImGui::ColorEdit3("light Color", &l.Color.x);
+					ImGui::ColorEdit3("Ambient Color", &ambientColor.x);
+					ImGui::SliderFloat("Intensity", &l.Intensity, 0, 20.f);
+
+				
+					ImGui::TreePop();
+			}
+				ImGui::PopID();
+
+				count++;
 
 		}
 		ImGui::TreePop();
@@ -314,7 +391,10 @@ void Game::Update(float deltaTime, float totalTime)
 	// Feed fresh data to ImGui
 	UpdateImGui(deltaTime, totalTime);
 	//check to see if camera changed
-
+	for (auto& i : entityList)
+	{
+		i->GetTransform()->Rotate(0, deltaTime, 0);
+	}
 	activeCam->Update(deltaTime);
 	
 
@@ -344,7 +424,10 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	for (auto& s : entityList)
 	{
+		std::shared_ptr<SimplePixelShader> ps = s->GetMaterial()->GetPixelShader();
+		ps->SetFloat3("ambient", ambientColor);
 		s->Draw(activeCam);
+		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 	}
 	
 	{
