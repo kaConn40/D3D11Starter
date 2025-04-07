@@ -9,7 +9,7 @@
 #include "Material.h"
 #include "SimpleShader.h"
 #include "Lights.h"
-
+#include "Sky.h"
 class Game
 {
 	
@@ -32,7 +32,7 @@ private:
 	void UpdateImGui(float deltaTime, float totalTime);
 
 	//some varaibles needed for ImGui
-	DirectX::XMFLOAT4 color = { 0.4f, 0.6f, 0.75f, 0.0f };
+	DirectX::XMFLOAT4 color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	std::unique_ptr<int>slider= std::make_unique<int>(50);
 	std::unique_ptr<char[]>input= std::make_unique<char[]>(60);
 	
@@ -43,8 +43,9 @@ private:
 	std::vector < std::shared_ptr<GameEntity>>entityList;
 	std::vector <std::shared_ptr<Camera>>cams;
 	std::shared_ptr<Camera>activeCam;
-	DirectX::XMFLOAT3 ambientColor{ 0.1f,0.1f,0.25f };
+	DirectX::XMFLOAT3 ambientColor{ 0.36f,0.4f,0.5f };
 	std::vector<Light>lights;
+	std::shared_ptr<Sky> sky;
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the

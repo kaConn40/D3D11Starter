@@ -42,6 +42,7 @@ class Mesh
 		void Draw();
 
 		void CreateBuffers(Vertex* vertList,int vertNum,unsigned int* indList,int indNum);
+		void CalculateTangents(Vertex* verts, int numVerts, unsigned int* indices, int numIndices);
 
 };
 

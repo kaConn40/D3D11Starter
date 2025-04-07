@@ -1,4 +1,5 @@
 #include "ShaderInclude.hlsli"
+#include "LightsInclude.hlsli"
 
 cbuffer ExternalData : register(b0)
 {
@@ -43,7 +44,9 @@ VertexToPixel main( VertexShaderInput input )
 	
     output.uv = input.uv;
     output.normal = normalize(mul((float3x3)worldInvTranspose, input.normal));
+    output.tangent = normalize(mul((float3x3) world, input.tangent));
     output.worldPos = mul(world, float4(input.localPosition, 1.0f)).xyz;
+   
 
 
 	// Whatever we return will make its way through the pipeline to the

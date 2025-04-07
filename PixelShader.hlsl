@@ -1,4 +1,5 @@
 #include "ShaderInclude.hlsli"
+#include "LightsInclude.hlsli"
 
 cbuffer ExternalData : register(b0)
 {
@@ -12,6 +13,8 @@ cbuffer ExternalData : register(b0)
 }
 
 Texture2D SurfaceTexture : register(t0); // "t" registers for textures
+Texture2D NormalMap: register(t1);
+
 SamplerState BasicSampler : register(s0); // "s" registers for sampler
 // Struct representing the data we expect to receive from earlier pipeline stages
 // - Should match the output of our corresponding vertex shader
@@ -22,10 +25,15 @@ SamplerState BasicSampler : register(s0); // "s" registers for sampler
 
 float4 main(VertexToPixel input) : SV_TARGET
 {
-    float3 surfaceColor = SurfaceTexture.Sample(BasicSampler, input.uv).xyz;
-    surfaceColor *= float4(colorTint, 1);
-   input.uv = input.uv * uvScale + uvOffset;
     input.normal = normalize(input.normal);
+    input.tangent = normalize(input.tangent);
+  
+    input.uv = input.uv * uvScale + uvOffset;
+    float3 unpackedNormal = NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1;
+    input.normal = TransformNormal(input.normal, input.tangent, unpackedNormal);
+    
+    float4 surfaceColor = SurfaceTexture.Sample(BasicSampler, input.uv);
+    surfaceColor *= float4(colorTint, 1);
    
     float3 totalLight = ambient * surfaceColor.xyz;
     for (int i = 0; i < 5; i++)
@@ -35,13 +43,13 @@ float4 main(VertexToPixel input) : SV_TARGET
         switch (light.Type)
         {
             case LIGHT_TYPE_DIRECTIONAL:
-                totalLight += Directional(light, input.normal, input.worldPos, cameraPosition, surfaceColor, roughness);
+                totalLight += Directional(light, input.normal, input.worldPos, cameraPosition, surfaceColor.xyz, roughness);
                 break;
             case LIGHT_TYPE_POINT:
-                totalLight += Point(light, input.normal, input.worldPos, cameraPosition, surfaceColor, roughness);
+                totalLight += Point(light, input.normal, input.worldPos, cameraPosition, surfaceColor.xyz, roughness);
                 break;
             case LIGHT_TYPE_SPOT:
-                totalLight += Spot(light, input.normal, input.worldPos, cameraPosition, surfaceColor, roughness);
+                totalLight += Spot(light, input.normal, input.worldPos, cameraPosition, surfaceColor.xyz, roughness);
                 break;
 
         }

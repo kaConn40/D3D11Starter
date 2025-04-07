@@ -19,6 +19,7 @@
 #include "SimpleShader.h"
 #include"Material.h"
 #include "WICTextureLoader.h"
+
 // For the DirectX Math library
 using namespace DirectX;
 
@@ -139,43 +140,44 @@ void Game::CreateGeometry()
 	}
 	Graphics::Device->CreateSamplerState(&sampDesc, sampler.GetAddressOf());
 	//srvs
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>rockWallSRV;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>wornPlanksSRV;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>dangerSignSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>rockSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>rockNormal;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>cobbleSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>cobbleNormal;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>cushionSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>cushionNormal;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>flatNormal;
 
 	//load texture
-	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(),FixPath(L"../../Assets/Textures/rock_wall.png").c_str(), 0, rockWallSRV.GetAddressOf());
-	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/worn_planks.png").c_str(), 0, wornPlanksSRV.GetAddressOf());
-	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/dangerSign.png").c_str(), 0, dangerSignSRV.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(),FixPath(L"../../Assets/Textures/rock.png").c_str(), 0, rockSRV.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/cobblestone.png").c_str(), 0,cobbleSRV.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/cushion.png").c_str(), 0, cushionSRV.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/rock_normals.png").c_str(), 0, rockNormal.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/cobblestone_normals.png").c_str(), 0, cobbleNormal.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/cushion_normals.png").c_str(), 0, cushionNormal.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/flat_normals.png").c_str(), 0, flatNormal.GetAddressOf());
 	
 
 	//ps and vs
 	std::shared_ptr<SimpleVertexShader> vs = std::make_shared<SimpleVertexShader>(
 		Graphics::Device, Graphics::Context, FixPath(L"VertexShader.cso").c_str());
+	std::shared_ptr<SimpleVertexShader> skyVs = std::make_shared<SimpleVertexShader>(
+		Graphics::Device, Graphics::Context, FixPath(L"SkyVS.cso").c_str());
 
 	std::shared_ptr<SimplePixelShader> ps = std::make_shared<SimplePixelShader>(
 		Graphics::Device, Graphics::Context, FixPath(L"PixelShader.cso").c_str());
 
-	std::shared_ptr<SimplePixelShader> combo = std::make_shared<SimplePixelShader>(
-		Graphics::Device, Graphics::Context, FixPath(L"TextureComboPS.cso").c_str());
+	std::shared_ptr<SimplePixelShader> skyPs = std::make_shared<SimplePixelShader>(
+		Graphics::Device, Graphics::Context, FixPath(L"SkyPS.cso").c_str());
+
+	std::shared_ptr<SimplePixelShader> envReflexPS = std::make_shared<SimplePixelShader>(
+		Graphics::Device, Graphics::Context, FixPath(L"ReflectSkyPS.cso").c_str());
+	
 	
 
 
 
 
-	std::shared_ptr<Material>matDangerRockwall = std::make_shared<Material>(ps, vs, white,.5f);
-	matDangerRockwall->AddSampler("BasicSampler", sampler);
-	matDangerRockwall->AddTextureSRV("SurfaceTexture", rockWallSRV);
-	
-
-	std::shared_ptr<Material>matPlanks = std::make_shared<Material>(ps, vs, white,.02f);
-	matPlanks->AddSampler("BasicSampler", sampler);
-	matPlanks->AddTextureSRV("SurfaceTexture", wornPlanksSRV);
-	
-
-	std::shared_ptr<Material>matRockwall = std::make_shared<Material>(ps, vs, white, .02f);
-	matRockwall->AddSampler("BasicSample", sampler);
-	matRockwall->AddTextureSRV("SurfaceTexture", rockWallSRV);
 	
 	
 	std::shared_ptr<Mesh> cube=std::make_shared<Mesh>("Cube",FixPath("../../Assets/Models/cube.obj").c_str());
@@ -187,35 +189,96 @@ void Game::CreateGeometry()
 	std::shared_ptr<Mesh> torus = std::make_shared<Mesh>("Torus", FixPath("../../Assets/Models/torus.obj").c_str());
 	meshList.insert(meshList.begin(), { cube,cyl,helix,quad,quadDS,sphere, torus });
 
-	entityList.push_back(std::make_shared<GameEntity>(cube,matRockwall));
+	
 
-	entityList.push_back(std::make_shared<GameEntity>(cyl, matPlanks));
-	entityList.push_back(std::make_shared<GameEntity>(helix, matRockwall));
-	entityList.push_back(std::make_shared<GameEntity>(sphere, matPlanks));
-	entityList.push_back(std::make_shared<GameEntity>(torus, matRockwall));
-	entityList.push_back(std::make_shared<GameEntity>(quad, matPlanks));
-	entityList.push_back(std::make_shared<GameEntity>(quadDS, matRockwall));
-	float x = -12;
-	for (auto& e : entityList)
+	//make sky
+	sky = std::make_shared<Sky>(
+		FixPath(L"../../Assets/Skies/Cold Sunset/right.png").c_str(),
+		FixPath(L"../../Assets/Skies/Cold Sunset/left.png").c_str(),
+		FixPath(L"../../Assets/Skies/Cold Sunset/up.png").c_str(),
+		FixPath(L"../../Assets/Skies/Cold Sunset/down.png").c_str(),
+		FixPath(L"../../Assets/Skies/Cold Sunset/front.png").c_str(),
+		FixPath(L"../../Assets/Skies/Cold Sunset/back.png").c_str(),
+		cube, skyPs, skyVs, sampler);
+
+
+	std::shared_ptr<Material>rockMat = std::make_shared<Material>(ps, vs, white, .5f);
+	rockMat->AddSampler("BasicSampler", sampler);
+	rockMat->AddTextureSRV("SurfaceTexture", rockSRV);
+	rockMat->AddTextureSRV("NormalMap", rockNormal);
+
+	std::shared_ptr<Material>skyRockMat = std::make_shared<Material>(envReflexPS, vs, white, .05f);
+	skyRockMat->AddSampler("BasicSampler", sampler);
+	skyRockMat->AddTextureSRV("NormalMap", rockNormal);
+	skyRockMat->AddTextureSRV("CubeMap", sky->GetSkyTexture());
+
+
+
+	std::shared_ptr<Material>cobbleMat = std::make_shared<Material>(ps, vs, white, .02f);
+	cobbleMat->AddSampler("BasicSampler", sampler);
+	cobbleMat->AddTextureSRV("SurfaceTexture", cobbleSRV);
+	cobbleMat->AddTextureSRV("NormalMap", cobbleNormal);
+	
+	std::shared_ptr<Material>skyCobbleMat = std::make_shared<Material>(envReflexPS, vs, white, .02f);
+	skyCobbleMat->AddSampler("BasicSampler", sampler);
+	skyCobbleMat->AddTextureSRV("NormalMap", cobbleNormal);
+	skyCobbleMat->AddTextureSRV("CubeMap", sky->GetSkyTexture());
+
+
+	std::shared_ptr<Material>cushionMat = std::make_shared<Material>(ps, vs, white, .02f);
+	cushionMat->AddSampler("BasicSample", sampler);
+	cushionMat->AddTextureSRV("SurfaceTexture", cushionSRV);
+	cushionMat->AddTextureSRV("NormalMap", cushionNormal);
+
+	std::shared_ptr<Material>skyCushionMat = std::make_shared<Material>(envReflexPS, vs, white, 0.0f);
+	skyCushionMat->AddSampler("BasicSample", sampler);
+	skyCushionMat->AddTextureSRV("CubeMap", sky->GetSkyTexture());
+	skyCushionMat->AddTextureSRV("NormalMap", cushionNormal);
+
+	matList.insert(matList.begin(), { rockMat,skyRockMat,cobbleMat,skyCobbleMat,cushionMat,skyCushionMat});
+
+	entityList.push_back(std::make_shared<GameEntity>(cube, cushionMat));
+	entityList.push_back(std::make_shared<GameEntity>(sphere, rockMat));
+	entityList.push_back(std::make_shared<GameEntity>(cyl, cobbleMat));
+	entityList.push_back(std::make_shared<GameEntity>(helix, cushionMat));
+	entityList.push_back(std::make_shared<GameEntity>(torus, rockMat));
+	entityList.push_back(std::make_shared<GameEntity>(quad, cobbleMat));
+	entityList.push_back(std::make_shared<GameEntity>(quadDS, cushionMat));
+
+	entityList.push_back(std::make_shared<GameEntity>(cube, skyCushionMat));
+	entityList.push_back(std::make_shared<GameEntity>(sphere, skyRockMat));
+	entityList.push_back(std::make_shared<GameEntity>(cyl, skyCobbleMat));
+	entityList.push_back(std::make_shared<GameEntity>(helix, skyCushionMat));
+	entityList.push_back(std::make_shared<GameEntity>(torus, skyRockMat));
+	entityList.push_back(std::make_shared<GameEntity>(quad, skyCobbleMat));
+	entityList.push_back(std::make_shared<GameEntity>(quadDS, skyCushionMat));
+
+	int i = 0;
+	for (int y = -4.5; y <= 0; y += 4.5)
 	{
-		e->GetTransform()->MoveAbsolute(x, 0, 0);
-		x += 3;
+		for (int x = -12; x <=6; x += 3)
+		{
+			entityList[i]->GetTransform()->MoveAbsolute(x, y, 0);
+			i++;
+		}
 	}
+	
+	//lights
 	Light light1 = {};
 	light1.Type = LIGHT_TYPE_DIRECTIONAL;
-	light1.Color = XMFLOAT3(1.0,0.0,0.0);
+	light1.Color = XMFLOAT3(1.0,1.0,1.0);
 	light1.Direction = XMFLOAT3(-1, 0, 0);
 	light1.Intensity = 1.0f;
 
 	Light light2 = {};
 	light2.Type = LIGHT_TYPE_DIRECTIONAL;
-	light2.Color = XMFLOAT3(0.0, 1.0, 0.0);
+	light2.Color = XMFLOAT3(1.0, 1.0, 1.0);
 	light2.Direction = XMFLOAT3(0, -1, 0);
 	light2.Intensity = 1.0f;
 
 	Light light3 = {};
 	light3.Type = LIGHT_TYPE_DIRECTIONAL;
-	light3.Color = XMFLOAT3(0.0, 0.0, 1.0);
+	light3.Color = XMFLOAT3(1.0, 1.0, 1.0);
 	light3.Direction = XMFLOAT3(0, 0, -1);
 	light3.Intensity = .0f;
 	
@@ -224,18 +287,18 @@ void Game::CreateGeometry()
 	light4.Type = LIGHT_TYPE_POINT;
 	light4.Color = XMFLOAT3(1.0,1.0, 1.0);
 	light4.Position = XMFLOAT3(-1.5, 0, 0);
-	light4.Intensity = 8.0f;
+	light4.Intensity = 0.0f;
 	light4.Range = 8.0f;
 
 	Light light5 = {};
 	light5.Type = LIGHT_TYPE_SPOT;
 	light5.Color = XMFLOAT3(1.0, 1.0, 1.0);
-	light5.Position = XMFLOAT3(3.2, .5,0.2 );
+	light5.Position = XMFLOAT3(3.2f, .5f,.2f );
 	light5.Direction=XMFLOAT3(-1, 0, 0);
 	light5.Range = 40;
 	light5.SpotInnerAngle = XMConvertToRadians(30.0f);
 	light5.SpotOuterAngle = XMConvertToRadians(20.0f);
-	light5.Intensity = 4.0f;
+	light5.Intensity = 0.0f;
 
 	lights.push_back(light1);
 	lights.push_back(light2);
@@ -248,9 +311,7 @@ void Game::CreateGeometry()
 				&lights[i].Direction, 
 				XMVector3Normalize(XMLoadFloat3(&lights[i].Direction))
 			);
-	
-	
-	light1.Color = XMFLOAT3(0.0, 1.0, 0.0);
+
 
 
 
@@ -429,7 +490,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		s->Draw(activeCam);
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 	}
-	
+	sky->Draw(activeCam);
 	{
 		
 
