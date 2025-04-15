@@ -43,7 +43,7 @@ private:
 	std::vector < std::shared_ptr<GameEntity>>entityList;
 	std::vector <std::shared_ptr<Camera>>cams;
 	std::shared_ptr<Camera>activeCam;
-	DirectX::XMFLOAT3 ambientColor{ 0.36f,0.4f,0.5f };
+	DirectX::XMFLOAT3 ambientColor{ 0,0,0 };
 	std::vector<Light>lights;
 	std::shared_ptr<Sky> sky;
 

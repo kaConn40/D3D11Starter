@@ -3,6 +3,7 @@
 
 
 
+
 struct VertexShaderInput
 {
 	// Data type
@@ -40,6 +41,5 @@ struct Sky_VertexToPixel
     float4 position : SV_Position;
     float3 samplerDir : DIRECTION;
 };
-
 
 #endif
