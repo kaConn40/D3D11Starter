@@ -16,7 +16,10 @@ Texture2D Albedo : register(t0);
 Texture2D NormalMap: register(t1);
 Texture2D RoughnessMap : register(t2);
 Texture2D MetalMap : register(t3);
+Texture2D ShadowMap : register(t4);
+
 SamplerState BasicSampler : register(s0); 
+SamplerComparisonState ShadowSampler : register(s1);
 
 
 
@@ -25,6 +28,7 @@ float4 main(VertexToPixel input) : SV_TARGET
     input.normal = normalize(input.normal);
     input.tangent = normalize(input.tangent);
   
+
     //uv
     input.uv = input.uv * uvScale + uvOffset;
     float3 unpackedNormal = NormalMap.Sample(BasicSampler, input.uv).rgb * 2 - 1;
@@ -43,6 +47,17 @@ float4 main(VertexToPixel input) : SV_TARGET
     float3 specularColor = lerp(F0_NON_METAL, surfaceColor.rgb, metal);
     
     float3 totalLight = ambient * surfaceColor.xyz;
+    
+        //shadows
+//perspective divide
+    input.shadowMapPos /= input.shadowMapPos.w;
+// Convert the normalized device coordinates to UVs for sampling
+    float2 shadowUV = input.shadowMapPos.xy * 0.5f + 0.5f;
+    shadowUV.y = 1.0f - shadowUV.y; // Flip the Y
+// Grab the distances we need: light-to-pixel and closest-surface
+    float distToLight = input.shadowMapPos.z;
+ // Get a ratio of comparison results using SampleCmpLevelZero()
+    float shadowAmount = ShadowMap.SampleCmpLevelZero(ShadowSampler, shadowUV, distToLight).r;
     for (int i = 0; i < 5; i++)
     {
         Light light = lights[i];
@@ -50,7 +65,14 @@ float4 main(VertexToPixel input) : SV_TARGET
         switch (light.Type)
         {
             case LIGHT_TYPE_DIRECTIONAL:
-                totalLight += Directional(light, input.normal, input.worldPos, cameraPosition, surfaceColor.xyz, roughness,metal);
+                float3 lightResult = Directional(light, input.normal, input.worldPos, cameraPosition, surfaceColor.xyz, roughness, metal);
+                // If this is the first light, apply the shadowing result
+                if (i == 0)
+                {
+                    lightResult *= shadowAmount;
+                }
+                // Add this light's result to the total light for this pixel
+                totalLight += lightResult;
                 break;
             case LIGHT_TYPE_POINT:
                 totalLight += Point(light, input.normal, input.worldPos, cameraPosition, surfaceColor.xyz, roughness,metal);

@@ -30,7 +30,8 @@ private:
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void CreateGeometry();
 	void UpdateImGui(float deltaTime, float totalTime);
-
+	void CreateShadowMap();
+	void RenderShadowMap();
 	//some varaibles needed for ImGui
 	DirectX::XMFLOAT4 color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	std::unique_ptr<int>slider= std::make_unique<int>(50);
@@ -47,6 +48,16 @@ private:
 	std::vector<Light>lights;
 	std::shared_ptr<Sky> sky;
 
+	//shadow
+	std::shared_ptr<SimpleVertexShader> shadowVS;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowDSV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV;
+	DirectX::XMFLOAT4X4 lightViewMatrix;
+	DirectX::XMFLOAT4X4 lightProjectionMatrix;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> shadowRasterizer;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> shadowSampler;
+	int shadowRes;
+	float shadowProjSize;
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
 	//     Component Object Model, which DirectX objects do
