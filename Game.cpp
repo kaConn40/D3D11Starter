@@ -92,9 +92,9 @@ void Game::Initialize()
 		//ImGui::StyleColorsLight();
 		//ImGui::StyleColorsClassic();
 	}
-	shadowRes = 2048;
-	shadowProjSize = 28.f;
-	CreateShadowMap();
+	//shadowRes = 2048;
+	//shadowProjSize = 28.f;
+	//CreateShadowMap();
 
 
 
@@ -197,7 +197,7 @@ void Game::CreateGeometry()
 	std::shared_ptr<SimplePixelShader> envReflexPS = std::make_shared<SimplePixelShader>(
 		Graphics::Device, Graphics::Context, FixPath(L"ReflectSkyPS.cso").c_str());
 
-	shadowVS = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"ShadowVS.cso").c_str());
+	/*shadowVS = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"ShadowVS.cso").c_str());*/
 	
 	
 
@@ -205,7 +205,7 @@ void Game::CreateGeometry()
 
 
 	
-	
+	//create meshes
 	std::shared_ptr<Mesh> cube=std::make_shared<Mesh>("Cube",FixPath("../../Assets/Models/cube.obj").c_str());
 	std::shared_ptr<Mesh> cyl = std::make_shared<Mesh>("Cylinder", FixPath("../../Assets/Models/cylinder.obj").c_str());
 	std::shared_ptr<Mesh> helix = std::make_shared<Mesh>("Helix", FixPath("../../Assets/Models/helix.obj").c_str());
@@ -227,7 +227,7 @@ void Game::CreateGeometry()
 		FixPath(L"../../Assets/Skies/Cold Sunset/back.png").c_str(),
 		cube, skyPs, skyVs, sampler);
 
-
+	//create materials
 	std::shared_ptr<Material>bronzeMat = std::make_shared<Material>(ps, vs, white, .03f);
 	bronzeMat->AddSampler("BasicSampler", sampler);
 	bronzeMat->AddTextureSRV("Albedo", bronzeAlbedo);
@@ -254,7 +254,8 @@ void Game::CreateGeometry()
 
 
 	matList.insert(matList.begin(), { bronzeMat,woodMat,cobbleMat});
-
+	
+	//create entities
 	entityList.push_back(std::make_shared<GameEntity>(cube,bronzeMat ));
 	entityList.push_back(std::make_shared<GameEntity>(sphere, woodMat));
 	entityList.push_back(std::make_shared<GameEntity>(cyl, cobbleMat));
@@ -263,17 +264,33 @@ void Game::CreateGeometry()
 	entityList.push_back(std::make_shared<GameEntity>(quad, cobbleMat));
 	entityList.push_back(std::make_shared<GameEntity>(quadDS, bronzeMat));
 
-
+	
+	//place entities
 	float x = -12.0f;
 	for (auto& e : entityList)
 	{
 		e->GetTransform()->MoveAbsolute(x, 0, 0);
 		x += 3;
 	}
-	entityList.push_back(std::make_shared<GameEntity>(quad, woodMat));
+	//create floor
+	/*entityList.push_back(std::make_shared<GameEntity>(quad, woodMat));
 	entityList.back()->GetTransform()->MoveAbsolute(0, -1.5, 0);
-	entityList.back()->GetTransform()->Scale(50, 50, 50);
+	entityList.back()->GetTransform()->Scale(50, 50, 50);*/
 
+	//post process
+	ppPS = std::make_shared<SimplePixelShader>(Graphics::Device, Graphics::Context, FixPath(L"PostProcessPS.cso").c_str());
+	ppVS = std::make_shared<SimpleVertexShader>(Graphics::Device, Graphics::Context, FixPath(L"FullscreenVS.cso").c_str());
+
+	ResizePPRs();
+
+	// Sampler state for post processing
+	D3D11_SAMPLER_DESC ppSampDesc = {};
+	ppSampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	ppSampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	ppSampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	Graphics::Device->CreateSamplerState(&ppSampDesc, ppSampler.GetAddressOf());
 	
 	//lights
 	Light light1 = {};
@@ -313,10 +330,10 @@ void Game::CreateGeometry()
 	light5.Intensity = 0.0f;
 
 	lights.push_back(light1);
-	/*lights.push_back(light2);
+	lights.push_back(light2);
 	lights.push_back(light3);
 	lights.push_back(light4);
-	lights.push_back(light5);*/
+	lights.push_back(light5);
 		for (int i = 0; i < lights.size(); i++)
 		if (lights[i].Type != LIGHT_TYPE_POINT)
 			XMStoreFloat3(
@@ -341,6 +358,7 @@ void Game::OnResize()
 	{
 		c->UpdateProjectionMatrix(Window::AspectRatio());
 	}
+	if (Graphics::Device) ResizePPRs();
 	
 }
 /// <summary>
@@ -421,7 +439,7 @@ void Game::UpdateImGui(float deltaTime,float totalTime)
 		ImGui::TreePop();
 	}
 
-	ImGui::Image((ImTextureID)shadowSRV.Get(), ImVec2(512, 512));
+	//ImGui::Image((ImTextureID)shadowSRV.Get(), ImVec2(512, 512));
 		
 
 	
@@ -497,11 +515,18 @@ void Game::Draw(float deltaTime, float totalTime)
 		Graphics::Context->ClearRenderTargetView(Graphics::BackBufferRTV.Get(),	&color.x);
 		Graphics::Context->ClearDepthStencilView(Graphics::DepthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
-	//enable raster
-	Graphics::Context->RSSetState(shadowRasterizer.Get());
+	//post process pre render
+	const float rtClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	Graphics::Context->ClearRenderTargetView(ppRTV.Get(), rtClearColor);
 
-	RenderShadowMap();
-	Graphics::Context->RSSetState(0);
+	// Change the render target to render directly into our post-process texture
+	Graphics::Context->OMSetRenderTargets(1, ppRTV.GetAddressOf(), Graphics::DepthBufferDSV.Get());
+
+
+	//enable raster
+	//Graphics::Context->RSSetState(shadowRasterizer.Get());
+	/*RenderShadowMap();
+	Graphics::Context->RSSetState(0);*/
 	
 
 	for (auto& s : entityList)
@@ -513,11 +538,37 @@ void Game::Draw(float deltaTime, float totalTime)
 		std::shared_ptr<SimplePixelShader> ps = s->GetMaterial()->GetPixelShader();
 		ps->SetFloat3("ambient", ambientColor);
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
-		ps->SetShaderResourceView("ShadowMap", shadowSRV);
-		ps->SetSamplerState("ShadowSampler", shadowSampler);
+	/*	ps->SetShaderResourceView("ShadowMap", shadowSRV);
+		ps->SetSamplerState("ShadowSampler", shadowSampler);*/
 		s->Draw(activeCam);
 	}
 	sky->Draw(activeCam);
+
+
+	//post process post render
+	Graphics::Context->OMSetRenderTargets(1, Graphics::BackBufferRTV.GetAddressOf(), 0);
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	ID3D11Buffer* nothing = 0;
+	Graphics::Context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+	Graphics::Context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+
+	ppVS->SetShader();
+	ppPS->SetShader();
+
+
+	ppPS->SetShaderResourceView("Pixels", ppSRV.Get());
+	ppPS->SetSamplerState("ClampSampler", ppSampler.Get());
+	ppPS->SetFloat("pixelWidth",1/(float)Window::Width());
+	ppPS->SetFloat("pixelHeight",1/(float)Window::Height());
+	ppPS->SetInt("blurRadius",3);
+	ppPS->CopyAllBufferData();
+
+	Graphics::Context->Draw(3, 0); // Draw exactly 3 vertices (one triangle)
+
+	ID3D11ShaderResourceView* nullSRVs[128] = {};
+	Graphics::Context->PSSetShaderResources(0, 128, nullSRVs);
 	{
 		
 
@@ -542,8 +593,6 @@ void Game::Draw(float deltaTime, float totalTime)
 			Graphics::BackBufferRTV.GetAddressOf(),
 			Graphics::DepthBufferDSV.Get());
 
-		ID3D11ShaderResourceView* nullSRVs[128] = {};
-		Graphics::Context->PSSetShaderResources(0, 128, nullSRVs);
 	}
 }
 
@@ -666,5 +715,44 @@ void Game::RenderShadowMap()
 		Graphics::DepthBufferDSV.Get());
 }
 
+void Game::ResizePPRs()
+{
+	ppSRV.Reset();
+	ppRTV.Reset();
+
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = (unsigned int)(Window::Width());
+	textureDesc.Height = (unsigned int)(Window::Height());
+	textureDesc.ArraySize = 1;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE; // Will render to it and sample from it!
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.MipLevels = 1;
+	textureDesc.MiscFlags = 0;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppTexture;
+	Graphics::Device->CreateTexture2D(&textureDesc, 0, ppTexture.GetAddressOf());
+
+	// Create the Render Target View
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = textureDesc.Format;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	Graphics::Device->CreateRenderTargetView(
+		ppTexture.Get(),
+		&rtvDesc,
+		ppRTV.ReleaseAndGetAddressOf());
+	// Create the Shader Resource View
+	// By passing it a null description for the SRV, we
+	// get a "default" SRV that has access to the entire resource
+	Graphics::Device->CreateShaderResourceView(
+		ppTexture.Get(),
+		0,
+		ppSRV.ReleaseAndGetAddressOf());
+
+}
 
 

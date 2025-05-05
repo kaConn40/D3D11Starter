@@ -32,6 +32,7 @@ private:
 	void UpdateImGui(float deltaTime, float totalTime);
 	void CreateShadowMap();
 	void RenderShadowMap();
+	void ResizePPRs();
 	//some varaibles needed for ImGui
 	DirectX::XMFLOAT4 color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	std::unique_ptr<int>slider= std::make_unique<int>(50);
@@ -58,6 +59,16 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> shadowSampler;
 	int shadowRes;
 	float shadowProjSize;
+
+
+	//post processing
+	//Resources that are shared among all post processes
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppSampler;
+	std::shared_ptr<SimpleVertexShader> ppVS;
+	// Resources that are tied to a particular post process
+	std::shared_ptr<SimplePixelShader> ppPS;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> ppRTV; // For rendering
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV; // For sampling
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
 	//     Component Object Model, which DirectX objects do
