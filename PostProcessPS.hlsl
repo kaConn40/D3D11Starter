@@ -1,35 +1,40 @@
-cbuffer externalData : register(b0)
+
+cbuffer ExternalData : register(b0)
 {
-    int blurRadius;
     float pixelWidth;
     float pixelHeight;
+    int blurRadius;
 }
+
+// Defines the input to this pixel shader
 struct VertexToPixel
 {
     float4 position : SV_POSITION;
     float2 uv : TEXCOORD0;
 };
-Texture2D Pixels : register(t0);
-SamplerState ClampSampler : register(s0);
 
+// Textures and such
+Texture2D PixelColors : register(t0);
+SamplerState BasicSampler : register(s0);
+
+// Entry point for this pixel shader
 float4 main(VertexToPixel input) : SV_TARGET
 {
-// Track the total color and number of samples
-    float3 total = { 0.0f, 0.0f, 0.0f };
-    int sampleCount = 0;
-// Loop through the "box"
+    float3 color = 0;
+    int totalSamples = 0;
+	
     for (int x = -blurRadius; x <= blurRadius; x++)
     {
         for (int y = -blurRadius; y <= blurRadius; y++)
         {
-// Calculate the uv for this sample
             float2 uv = input.uv;
-            uv += float2(x * pixelWidth, y * pixelHeight);
-// Add this color to the running total
-            total += Pixels.Sample(ClampSampler, uv);
-            sampleCount++;
+            uv.x += x * pixelWidth;
+            uv.y += y * pixelHeight;
+			
+            color += PixelColors.Sample(BasicSampler, uv).rgb;
+            totalSamples++;
         }
     }
-// Return the average
-    return float4(total / sampleCount,1);
+	
+    return float4(color / totalSamples, 1);
 }

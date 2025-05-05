@@ -60,15 +60,14 @@ private:
 	int shadowRes;
 	float shadowProjSize;
 
-
-	//post processing
-	//Resources that are shared among all post processes
+	// Resources that are shared among all post processes
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppSampler;
 	std::shared_ptr<SimpleVertexShader> ppVS;
 	// Resources that are tied to a particular post process
 	std::shared_ptr<SimplePixelShader> ppPS;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> ppRTV; // For rendering
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV; // For sampling
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV; // For samplin
+	int blurRadius;
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
 	//     Component Object Model, which DirectX objects do
