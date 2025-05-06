@@ -68,7 +68,7 @@ void Game::Initialize()
 	//hold which ever cam is being used and let us change it
 
 	activeCam = cam1;
-	blurRadius = 5;
+	blurRadius = 0;
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
@@ -147,6 +147,8 @@ void Game::CreateGeometry()
 	}
 	Graphics::Device->CreateSamplerState(&sampDesc, sampler.GetAddressOf());
 	//srvs
+
+	
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>bronzeAlbedo;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>bronzeMetal;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>bronzeNormal;
@@ -163,6 +165,13 @@ void Game::CreateGeometry()
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>cobbleNormal;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>cobbleRoughness;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>flatNormal;
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>lavaAlbedo;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>lavaMetal;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>lavaNormal;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>lavaRoughness;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>lavaEmissive;
+
 
 	//load texture
 	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(),FixPath(L"../../Assets/Textures/bronze_albedo.png").c_str(), 0, bronzeAlbedo.GetAddressOf());
@@ -181,6 +190,12 @@ void Game::CreateGeometry()
 	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/cobblestone_roughness.png").c_str(), 0, cobbleRoughness.GetAddressOf());
 
 	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/flat_normals.png").c_str(), 0, flatNormal.GetAddressOf());
+
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/lava_albedo.png").c_str(), 0, lavaAlbedo.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/lava_metallic.png").c_str(), 0, lavaMetal.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/lava_normal.png").c_str(), 0, lavaNormal.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/lava_roughness.png").c_str(), 0, lavaRoughness.GetAddressOf());
+	DirectX::CreateWICTextureFromFile(Graphics::Device.Get(), Graphics::Context.Get(), FixPath(L"../../Assets/Textures/lava_emissive.png").c_str(), 0, lavaEmissive.GetAddressOf());
 	
 
 	//ps and vs
@@ -235,6 +250,7 @@ void Game::CreateGeometry()
 	bronzeMat->AddTextureSRV("NormalMap", bronzeNormal);
 	bronzeMat->AddTextureSRV("RoughnessMap", bronzeRoughness);
 	bronzeMat->AddTextureSRV("MetalMap", bronzeMetal);
+	bronzeMat->AddTextureSRV("EmissiveMap", lavaEmissive);
 
 
 	std::shared_ptr<Material>woodMat = std::make_shared<Material>(ps, vs, white, .3f);
@@ -243,6 +259,8 @@ void Game::CreateGeometry()
 	woodMat->AddTextureSRV("NormalMap", woodNormal);
 	woodMat->AddTextureSRV("RoughnessMap", woodRoughness);
 	woodMat->AddTextureSRV("MetalMap", woodMetal);
+	woodMat->AddTextureSRV("EmissiveMap", lavaEmissive);
+
 
 
 	std::shared_ptr<Material>cobbleMat = std::make_shared<Material>(ps, vs, white, .3f);
@@ -251,14 +269,22 @@ void Game::CreateGeometry()
 	cobbleMat->AddTextureSRV("NormalMap", cobbleNormal);
 	cobbleMat->AddTextureSRV("RoughnessMap", cobbleRoughness);
 	cobbleMat->AddTextureSRV("MetalMap", cobbleMetal);
+	cobbleMat->AddTextureSRV("EmissiveMap", lavaEmissive);
 
+	std::shared_ptr<Material>lavaMat = std::make_shared<Material>(ps, vs, white, .3f);
+	lavaMat->AddSampler("BasicSampler", sampler);
+	lavaMat->AddTextureSRV("Albedo", lavaAlbedo);
+	lavaMat->AddTextureSRV("NormalMap",lavaNormal);
+	lavaMat->AddTextureSRV("RoughnessMap", lavaRoughness);
+	lavaMat->AddTextureSRV("MetalMap", lavaMetal);
+	lavaMat->AddTextureSRV("EmissiveMap", lavaEmissive);
 
-
-	matList.insert(matList.begin(), { bronzeMat,woodMat,cobbleMat});
+	matList.insert(matList.begin(), { bronzeMat,woodMat,cobbleMat,lavaMat});
 
 	entityList.push_back(std::make_shared<GameEntity>(cube,bronzeMat ));
 	entityList.push_back(std::make_shared<GameEntity>(sphere, woodMat));
 	entityList.push_back(std::make_shared<GameEntity>(cyl, cobbleMat));
+	entityList.push_back(std::make_shared<GameEntity>(cyl, lavaMat));
 	entityList.push_back(std::make_shared<GameEntity>(helix, bronzeMat));
 	entityList.push_back(std::make_shared<GameEntity>(torus, woodMat));
 	entityList.push_back(std::make_shared<GameEntity>(quad, cobbleMat));
@@ -321,10 +347,10 @@ void Game::CreateGeometry()
 	light5.Intensity = 0.0f;
 
 	lights.push_back(light1);
-	/*lights.push_back(light2);
+	lights.push_back(light2);
 	lights.push_back(light3);
 	lights.push_back(light4);
-	lights.push_back(light5);*/
+	lights.push_back(light5);
 		for (int i = 0; i < lights.size(); i++)
 		if (lights[i].Type != LIGHT_TYPE_POINT)
 			XMStoreFloat3(
@@ -431,9 +457,10 @@ void Game::UpdateImGui(float deltaTime,float totalTime)
 		ImGui::TreePop();
 	}
 
-	ImGui::Image((ImTextureID)shadowSRV.Get(), ImVec2(512, 512));
+	//ImGui::Image((ImTextureID)shadowSRV.Get(), ImVec2(512, 512));
 		
 	ImGui::SliderInt("Blur Disance", &blurRadius, 0, 50);
+	ImGui::Checkbox("Emssive Map", &useEmissive);
 	
 	//set the info up and let it be changed by ui
 	XMFLOAT3 pos = activeCam->GetTransform()->GetPosition();
@@ -529,6 +556,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		std::shared_ptr<SimplePixelShader> ps = s->GetMaterial()->GetPixelShader();
 		ps->SetFloat3("ambient", ambientColor);
 		ps->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
+		ps->SetInt("useEmissive", useEmissive);
 		/*ps->SetShaderResourceView("ShadowMap", shadowSRV);
 		ps->SetSamplerState("ShadowSampler", shadowSampler);*/
 		s->Draw(activeCam);

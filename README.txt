@@ -1,0 +1,1 @@
+For task 2 i added an emissive map to the game entities and have a check box to turn it on and off

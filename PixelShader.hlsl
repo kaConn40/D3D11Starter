@@ -10,6 +10,7 @@ cbuffer ExternalData : register(b0)
     float3 cameraPosition;
     float3 ambient;
     Light lights[5];
+    bool useEmissive;
 }
 //textures and samplers
 Texture2D Albedo : register(t0);
@@ -17,6 +18,7 @@ Texture2D NormalMap: register(t1);
 Texture2D RoughnessMap : register(t2);
 Texture2D MetalMap : register(t3);
 Texture2D ShadowMap : register(t4);
+Texture2D EmissiveMap : register(t5);
 
 SamplerState BasicSampler : register(s0); 
 SamplerComparisonState ShadowSampler : register(s1);
@@ -76,7 +78,17 @@ float4 main(VertexToPixel input) : SV_TARGET
 
         }
     }
+    if (useEmissive)
+    {
+        float3 emissiveColor = EmissiveMap.Sample(BasicSampler, input.uv).rgb;
+        totalLight += pow(emissiveColor.rgb, 2.2);
 
+    }
+    else
+    {
+        totalLight += float3(0, 0, 0);
+
+    }
     float3 final = pow(totalLight, 1 / 2.2f);
     return float4(final,1);
 
